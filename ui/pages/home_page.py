@@ -18,7 +18,7 @@ def create_home_page(
         on_navigate: Callable[[str], None]
 ) -> ft.Container:
     """
-    Página Inicial com os 5 módulos em formato de lista (com ícone padronizado).
+    Página Inicial com os módulos da aplicação em formato de lista.
     """
 
     def build_module_card(
@@ -86,9 +86,15 @@ def create_home_page(
             "route_key": "post_processing_hub"
         },
         {
+            "title": "Projeção 3D",
+            "description": "Renderização de vistas sintéticas via COLMAP e PyVista.",
+            "icon": ft.icons.CAMERA_OUTDOOR,
+            "route_key": "projection"
+        },
+        {
             "title": "Visualização 3D",
             "description": "Visualizador de nuvens de pontos e malhas 3D.",
-            "icon": ft.icons.VIEW_IN_AR,  # <-- Atualizado para usar exatamente ft.icons.VIEW_IN_AR
+            "icon": ft.icons.VIEW_IN_AR,
             "route_key": "visualization"
         },
     ]

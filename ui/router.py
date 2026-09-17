@@ -13,8 +13,11 @@ from ui.pages.post_processing.post_processing_hub_page import create_post_proces
 # Páginas Direct - Acquisition
 from ui.pages.acquisition.extract_frames_page import create_extract_frames_page
 
-# Páginas Direct -  Visualization
+# Páginas Direct - Visualization
 from ui.pages.visualization.visualization_page import create_visualization_page
+
+# Páginas Direct - Projection (NOVO)
+from ui.pages.projection.projection_page import create_projection_page
 
 # Páginas Finais - Calibração
 from ui.pages.camera_calibration.mono_calibration_page import create_mono_calibration_page
@@ -89,9 +92,15 @@ ROUTE_REGISTRY = {
         "is_hub": False
     },
 
+    # Aquisição & Projeção
     "acquisition": {
         "title": "Aquisição de Imagens",
         "builder": create_extract_frames_page,
+        "is_hub": False
+    },
+    "projection": {
+        "title": "Projeção 3D",
+        "builder": create_projection_page,
         "is_hub": False
     },
     "visualization": {
