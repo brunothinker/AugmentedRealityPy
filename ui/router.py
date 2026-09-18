@@ -18,6 +18,16 @@ from ui.pages.visualization_page import create_visualization_page
 # --- FACTORIES DOS HUBS SUB-MODULARES ---
 
 def build_calibration_hub(page: ft.Page, selected_paths: Dict[str, Path], on_navigate: Callable[[str], None]) -> ft.Container:
+    """Constrói o Hub sub-modular de Calibração de Câmeras.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+        on_navigate: Callback responsável por acionar o roteador de navegação principal.
+
+    Returns:
+        ft.Container: Container Flet contendo o submenu de calibração.
+    """
     return create_generic_hub_page(
         page=page,
         selected_paths=selected_paths,
@@ -43,6 +53,16 @@ def build_calibration_hub(page: ft.Page, selected_paths: Dict[str, Path], on_nav
 
 
 def build_reconstruction_hub(page: ft.Page, selected_paths: Dict[str, Path], on_navigate: Callable[[str], None]) -> ft.Container:
+    """Constrói o Hub sub-modular de Reconstrução 3D.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+        on_navigate: Callback responsável por acionar o roteador de navegação principal.
+
+    Returns:
+        ft.Container: Container Flet contendo o submenu de reconstrução.
+    """
     return create_generic_hub_page(
         page=page,
         selected_paths=selected_paths,
@@ -68,6 +88,16 @@ def build_reconstruction_hub(page: ft.Page, selected_paths: Dict[str, Path], on_
 
 
 def build_post_processing_hub(page: ft.Page, selected_paths: Dict[str, Path], on_navigate: Callable[[str], None]) -> ft.Container:
+    """Constrói o Hub sub-modular de Pós-Processamento de Imagens.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+        on_navigate: Callback responsável por acionar o roteador de navegação principal.
+
+    Returns:
+        ft.Container: Container Flet contendo o submenu de pós-processamento.
+    """
     return create_generic_hub_page(
         page=page,
         selected_paths=selected_paths,
@@ -94,6 +124,8 @@ def build_post_processing_hub(page: ft.Page, selected_paths: Dict[str, Path], on
 
 # --- REGISTRO CENTRAL DE ROTAS ---
 
+# Mapeia as chaves das rotas da aplicação para seus respectivos títulos,
+# construtores (builders) e sinalizadores de navegação de hub (is_hub).
 ROUTE_REGISTRY = {
     # Home Principal
     "home": {
@@ -180,7 +212,20 @@ def build_page_view(
     selected_paths: Dict[str, Path],
     on_navigate: Callable[[str], None],
 ) -> ft.Control:
-    """Constrói a View Flet correspondente à rota informada."""
+    """Constrói a View Flet correspondente à rota informada a partir do registro central.
+
+    Resolve a chave da rota no `ROUTE_REGISTRY` e invoca o builder adequado passando
+    as dependências necessárias (injetando `on_navigate` apenas para páginas sinalizadas como Hub).
+
+    Args:
+        route_key: Chave identificadora da rota no sistema (ex: 'acquisition', 'mono_calibration').
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado contendo os caminhos selecionados pelo usuário.
+        on_navigate: Callback responsável por acionar o roteador de navegação principal.
+
+    Returns:
+        ft.Control: Controle Flet instanciado (Container de View) ou tela de erro 404.
+    """
     route_info = ROUTE_REGISTRY.get(route_key)
     if not route_info:
         return ft.Container(
@@ -190,6 +235,7 @@ def build_page_view(
 
     builder = route_info["builder"]
 
+    # Injeta o handler de navegação dinamicamente apenas para telas do tipo Hub
     if route_info.get("is_hub", False):
         return builder(page, selected_paths, on_navigate=on_navigate)
 

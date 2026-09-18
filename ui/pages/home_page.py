@@ -14,20 +14,34 @@ from ui.theme import (
 def create_home_page(
     page: ft.Page,
     selected_paths: Dict[str, Path],
-    on_navigate: Callable[[str], None]
+    on_navigate: Callable[[str], None],
 ) -> ft.Container:
-    """Página Inicial com os módulos da aplicação em formato de lista estilizada."""
+    """Gera a View da Página Inicial contendo o menu dos módulos em lista estendida.
+
+    Instancia a grade vertical de seleção para os módulos do sistema (Aquisição,
+    Calibração, Reconstrução, Pós-Processamento, Projeção e Visualização), definindo
+    o redirecionamento de rotas e o comportamento hover dos cards.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+        on_navigate: Callback responsável por acionar o roteador de navegação principal.
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo o menu principal de navegação.
+    """
 
     def build_module_card(
         title: str,
         description: str,
         icon: str,
-        route_key: str
+        route_key: str,
     ) -> ft.Container:
+        """Constrói um card retangular responsivo para exibição e navegação de módulo."""
         return ft.Container(
             content=ft.Row(
                 [
-                    # Lado Esquerdo: Ícone + Título
+                    # Lado Esquerdo: Ícone e Título do Módulo
                     ft.Row(
                         [
                             ft.Icon(icon, size=26, color=COLOR_PRIMARY),
@@ -36,7 +50,7 @@ def create_home_page(
                         spacing=12,
                         alignment=ft.MainAxisAlignment.START,
                     ),
-                    # Lado Direito: Descrição
+                    # Lado Direito: Descrição do Módulo
                     ft.Text(
                         description,
                         size=12,
@@ -62,7 +76,7 @@ def create_home_page(
             or e.control.update(),
         )
 
-    # Módulos principais mapeados para as rotas do Roteador
+    # 1. Mapeamento de módulos do sistema e chaves de roteamento
     modules = [
         {
             "title": "Aquisição",
@@ -102,6 +116,7 @@ def create_home_page(
         },
     ]
 
+    # 2. Estruturação do Container principal da Home
     return ft.Container(
         alignment=ft.alignment.center,
         padding=20,

@@ -16,8 +16,21 @@ from ui.theme import (
 
 
 def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Projeção usando o componente IOPickerCard em lista."""
+    """Gera a interface gráfica para a página de projeção e renderização de vistas sintéticas.
 
+    Configura a entrada do nome da subpasta do projeto, instancia os componentes `IOPickerCard`
+    para a pasta esparsa do COLMAP, arquivo de malha 3D e diretório de saída utilizando
+    o formato de lista estendida (`build_list_tile`), e gerencia a execução em thread
+    secundária associada ao modal `ExecutionDialog`.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo a view de projeção sintética.
+    """
+    # 1. Definição do campo para nome do projeto/subpasta
     tf_proj_name = ft.TextField(
         label="Nome do Projeto (Subpasta)",
         hint_text="Ex: projecao_teste",
@@ -25,6 +38,7 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
         expand=True,
     )
 
+    # 2. Instanciação dos cards de seleção I/O no formato lista
     card_colmap_dir = IOPickerCard(
         page=page,
         title="Pasta COLMAP (sparse)",
@@ -52,6 +66,7 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
         is_directory=True,
     )
 
+    # 3. Handler de acionamento do pipeline de projeção
     def on_run_click(e: ft.ControlEvent):
         dialog = ExecutionDialog(page=page, title="Projeção de Vistas Sintéticas")
         dialog.show()
@@ -81,6 +96,7 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
         on_click=on_run_click,
     )
 
+    # 4. Estruturação visual do formulário de projeção
     form_projection = ft.Column(
         [
             ft.Row([tf_proj_name]),

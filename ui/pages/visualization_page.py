@@ -14,8 +14,21 @@ from ui.theme import (
 
 
 def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Visualização 3D utilizando o IOPickerCard no formato de lista retangular."""
+    """Gera a interface gráfica para a página de inspeção e visualização volumétrica 3D.
 
+    Instancia o seletor de arquivos de malha/nuvem de pontos (`.ply` ou `.obj`) utilizando
+    o componente `IOPickerCard` no layout de lista estendida (`build_list_tile`), e configura
+    o callback de notificação e acionamento da janela externa do PyVista.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo a view de visualização 3D.
+    """
+
+    # 1. Função utilitária interna para exibição de SnackBars/Toasts de feedback
     def show_toast(message: str, is_error: bool = False):
         page.show_snack_bar(
             ft.SnackBar(
@@ -24,7 +37,7 @@ def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) ->
             )
         )
 
-    # Card de Seleção da Malha em formato lista
+    # 2. Instanciação do card de seleção I/O para arquivos de malha 3D
     card_model = IOPickerCard(
         page=page,
         title="Modelo 3D (.ply / .obj)",
@@ -34,6 +47,7 @@ def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) ->
         is_directory=False,
     )
 
+    # 3. Botão para acionamento do renderizador
     btn_run = ft.ElevatedButton(
         "Renderizar Modelo 3D",
         icon=ft.icons.PLAY_CIRCLE_FILL,
@@ -43,6 +57,7 @@ def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) ->
         on_click=lambda e: handle_visualization(selected_paths, show_toast),
     )
 
+    # 4. Estruturação visual do formulário de visualização
     form_visualization = ft.Column(
         [
             card_model.build_list_tile(),

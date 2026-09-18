@@ -16,11 +16,32 @@ from ui.theme import (
 
 
 def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Extração de Frames usando o componente IOPickerCard em lista."""
+    """Gera a interface gráfica para a página de decomposição temporal e extração de fotogramas.
 
-    tf_acq_proj = ft.TextField(label="Nome do Projeto (Subpasta)", expand=True)
-    tf_acq_fps = ft.TextField(label="FPS Desejado", value="5", width=130)
+    Instancia os campos de texto para nome do projeto e FPS, os componentes `IOPickerCard`
+    no layout de lista estendida (`build_list_tile`), e configura a execução assíncrona da tarefa
+    vinculada ao modal de progresso `ExecutionDialog`.
 
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo o formulário de aquisição.
+    """
+    # 1. Definição dos campos de entrada de texto
+    tf_acq_proj = ft.TextField(
+        label="Nome do Projeto (Subpasta)",
+        hint_text="Ex: amostragem_video",
+        expand=True,
+    )
+    tf_acq_fps = ft.TextField(
+        label="FPS Desejado",
+        value="5",
+        width=130,
+    )
+
+    # 2. Instanciação dos cards de seleção I/O em formato de lista retangular
     card_video = IOPickerCard(
         page=page,
         title="Vídeo de Origem",
@@ -39,9 +60,11 @@ def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -
         is_directory=True,
     )
 
+    # 3. Handler de acionamento do processamento em thread separada
     def on_run_click(e: ft.ControlEvent):
         cancel_event = threading.Event()
 
+        # Configuração do modal de execução com callback de cancelamento
         dialog = ExecutionDialog(
             page=page,
             title="Decomposição Temporal de Vídeo",
@@ -66,8 +89,10 @@ def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -
                 cancel_event=cancel_event,
             )
 
+        # Dispara a tarefa em uma thread daemon para não travar a UI
         threading.Thread(target=run_task, daemon=True).start()
 
+    # 4. Botão de execução
     btn_run = ft.ElevatedButton(
         "Extrair Frames",
         icon=ft.icons.PLAY_ARROW,
@@ -77,6 +102,7 @@ def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -
         on_click=on_run_click,
     )
 
+    # 5. Montagem da estrutura visual do formulário
     form_acquisition = ft.Column(
         [
             ft.Row([tf_acq_proj, tf_acq_fps]),

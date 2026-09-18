@@ -21,9 +21,23 @@ def create_generic_hub_page(
     subtitle: str,
     options: List[Dict[str, Any]],
 ) -> ft.Container:
-    """
-    Construtor genérico polimórfico de páginas Hub para a interface.
-    Elimina a necessidade de ter controllers e telas duplicadas para hubs de navegação.
+    """Gera uma página de Hub genérica e polimórfica para menus de navegação intermediários.
+
+    Instancia um layout reutilizável contendo o título do módulo, subtítulo e uma grade
+    de cards selecionáveis (`build_option_card`), eliminando a necessidade de código
+    duplicado para hubs de navegação (ex: submenus de Calibração, Reconstrução, etc.).
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+        on_navigate: Callback responsável por acionar o roteador de navegação principal.
+        main_icon: Nome do ícone principal do cabeçalho do Hub.
+        title: Título principal exibido no topo da página.
+        subtitle: Descrição/subtítulo explicativo sobre a funcionalidade do Hub.
+        options: Lista de dicionários contendo os dados dos cards ('title', 'description', 'icon', 'route_key').
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo a interface polimórfica do Hub.
     """
 
     def build_option_card(
@@ -32,7 +46,7 @@ def create_generic_hub_page(
         icon: str,
         route_key: str,
     ) -> ft.Container:
-        """Contrói um card clicável de opção para os módulos do app."""
+        """Constrói um card clicável de opção estilizado para os submódulos da aplicação."""
         return ft.Container(
             content=ft.Column(
                 [
@@ -68,6 +82,7 @@ def create_generic_hub_page(
             or e.control.update(),
         )
 
+    # 1. Estruturação do Container principal com cabeçalho e grade dinâmica de opções
     return ft.Container(
         expand=True,
         alignment=ft.alignment.center,

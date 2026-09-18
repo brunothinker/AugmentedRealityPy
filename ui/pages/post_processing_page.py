@@ -16,11 +16,24 @@ from ui.theme import (
 
 
 def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Realce de Contraste CLAHE usando o componente IOPickerCard em lista."""
+    """Gera a interface gráfica para a página de realce de contraste adaptativo (CLAHE).
 
+    Instancia os seletores de pasta de entrada e destino utilizando o `IOPickerCard` no
+    layout de lista (`build_list_tile`), configura os campos de texto para os parâmetros
+    de histograma (Clip Limit e Tile Size) e gerencia o envio assíncrono para a controller.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo a view do CLAHE.
+    """
+    # 1. Definição dos campos de texto para parâmetros do CLAHE
     tf_norm_clip = ft.TextField(label="Clip Limit", value="2.0", expand=True)
     tf_norm_tile = ft.TextField(label="Tile Size", value="8", expand=True)
 
+    # 2. Cards de seleção I/O no formato lista
     card_clahe_in = IOPickerCard(
         page=page,
         title="Pasta de Entrada",
@@ -37,6 +50,7 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
         selected_paths=selected_paths,
     )
 
+    # 3. Handler de execução para aplicação do filtro
     def on_run_click(e: ft.ControlEvent):
         cancel_event = threading.Event()
 
@@ -75,6 +89,7 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
         on_click=on_run_click,
     )
 
+    # 4. Estruturação visual do formulário CLAHE
     form_clahe = ft.Column(
         [
             card_clahe_in.build_list_tile(),
@@ -106,11 +121,23 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
 
 
 def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Redimensionamento de Imagens usando o componente IOPickerCard em lista."""
+    """Gera a interface gráfica para a página de redimensionamento de imagens em lote.
 
+    Configura os seletores de entrada e saída, os campos para inserção da resolução alvo
+    (largura e altura em pixels) e gerencia o disparo do processamento com modal de progresso.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet estruturado contendo a view de redimensionamento.
+    """
+    # 1. Definição dos campos para resolução em pixels
     tf_resize_w = ft.TextField(label="Largura Alvo (px)", value="4000", expand=True)
     tf_resize_h = ft.TextField(label="Altura Alvo (px)", value="3000", expand=True)
 
+    # 2. Cards de seleção I/O no formato lista
     card_resize_in = IOPickerCard(
         page=page,
         title="Pasta de Entrada",
@@ -127,6 +154,7 @@ def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Con
         selected_paths=selected_paths,
     )
 
+    # 3. Handler de execução do redimensionamento
     def on_run_click(e: ft.ControlEvent):
         cancel_event = threading.Event()
 
@@ -165,6 +193,7 @@ def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Con
         on_click=on_run_click,
     )
 
+    # 4. Estruturação visual do formulário de redimensionamento
     form_resize = ft.Column(
         [
             card_resize_in.build_list_tile(),

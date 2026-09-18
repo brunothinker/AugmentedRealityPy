@@ -16,8 +16,20 @@ from ui.theme import (
 
 
 def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Calibração Monocular usando o componente IOPickerCard em lista."""
+    """Gera a interface gráfica para a página de calibração de câmera monocular.
 
+    Configura os campos de entrada de texto (nome do projeto e dimensões do tabuleiro de xadrez),
+    instancia os seletores de entrada e saída no formato lista estendida (`build_list_tile`),
+    e gerencia a execução assíncrona da calibração através do `ExecutionDialog`.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet contendo a estrutura do formulário monocular.
+    """
+    # 1. Definição dos campos de texto e hiperparâmetros do tabuleiro de xadrez
     tf_project_name = ft.TextField(
         label="Nome do Projeto (Subpasta)",
         hint_text="Ex: meu_projeto_mono",
@@ -28,6 +40,7 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
     tf_grid_cols = ft.TextField(label="Colunas de Cantos Internos", value="9", expand=True)
     tf_square_size = ft.TextField(label="Tamanho do Quadrado (m)", value="0.025", expand=True)
 
+    # 2. Instanciação dos cards de seleção I/O em formato de lista
     card_mono_in = IOPickerCard(
         page=page,
         title="Pasta de Imagens",
@@ -44,6 +57,7 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
         selected_paths=selected_paths,
     )
 
+    # 3. Handler de execução para a rotina monocular
     def on_run_click(e: ft.ControlEvent):
         cancel_event = threading.Event()
 
@@ -84,6 +98,7 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
         on_click=on_run_click,
     )
 
+    # 4. Estruturação visual do formulário monocular
     form_mono = ft.Column(
         [
             ft.Row([tf_project_name]),
@@ -118,8 +133,19 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
 
 
 def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
-    """Gera a View da Tela de Calibração Estéreo usando o componente IOPickerCard em lista."""
+    """Gera a interface gráfica para a página de calibração de sistema estéreo.
 
+    Configura a seleção independente das câmeras esquerda e direita, campos para geometria
+    do padrão de calibração e vincula o processamento assíncrono estéreo ao `ExecutionDialog`.
+
+    Args:
+        page: Instância do Flet Page ativa na aplicação.
+        selected_paths: Dicionário compartilhado de caminhos selecionados pelo usuário.
+
+    Returns:
+        ft.Container: Container Flet contendo a estrutura do formulário estéreo.
+    """
+    # 1. Definição dos campos de texto e hiperparâmetros do tabuleiro
     tf_project_name = ft.TextField(
         label="Nome do Projeto (Subpasta)",
         hint_text="Ex: meu_projeto_stereo",
@@ -130,6 +156,7 @@ def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path
     tf_grid_cols = ft.TextField(label="Colunas de Cantos Internos", value="9", expand=True)
     tf_square_size = ft.TextField(label="Tamanho do Quadrado (m)", value="0.025", expand=True)
 
+    # 2. Instanciação dos cards de seleção I/O para ambas as câmeras e saída
     card_left = IOPickerCard(
         page=page,
         title="Câmera Esquerda",
@@ -154,6 +181,7 @@ def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path
         selected_paths=selected_paths,
     )
 
+    # 3. Handler de execução para a rotina estéreo
     def on_run_click(e: ft.ControlEvent):
         cancel_event = threading.Event()
 
@@ -194,6 +222,7 @@ def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path
         on_click=on_run_click,
     )
 
+    # 4. Estruturação visual do formulário estéreo
     form_stereo = ft.Column(
         [
             ft.Row([tf_project_name]),
