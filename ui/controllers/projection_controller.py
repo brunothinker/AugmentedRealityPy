@@ -1,19 +1,20 @@
 from pathlib import Path
-from typing import Dict, Callable, Optional
+from typing import Callable, Dict, Optional
 
 from src.projection.projection import render_synthetic_views
 from src.projection.projecton_utils import organize_output_by_camera
+from ui.ui_utils import get_user_home_dir
 
 
 def handle_render_projection(
-        selected_paths: Dict[str, Path],
-        output_folder_name: str,
-        show_toast_callback: Callable[[str, bool], None],
-        set_ui_state_callback: Callable[[bool, str], None],
+    selected_paths: Dict[str, Path],
+    output_folder_name: str,
+    show_toast_callback: Callable[[str, bool], None],
+    set_ui_state_callback: Callable[[bool, str], None],
 ) -> None:
     """
     Controller para a renderização de projeções sintéticas 3D.
-    Valida as entradas da UI, define o diretório 'data/out/projection' e dispara a execução.
+    Valida as entradas da UI, resolve o diretório de saída e dispara a execução.
     """
     # 1. Validação da Pasta do COLMAP (contendo os binários)
     colmap_dir: Optional[Path] = selected_paths.get("colmap_dir")
@@ -21,7 +22,6 @@ def handle_render_projection(
         show_toast_callback("Selecione um diretório COLMAP válido (com cameras.bin e images.bin)!", is_error=True)
         return
 
-    # Validação rápida de existência dos arquivos requeridos
     if not (colmap_dir / "cameras.bin").exists() or not (colmap_dir / "images.bin").exists():
         show_toast_callback("O diretório COLMAP selecionado não possui 'cameras.bin' e 'images.bin'!", is_error=True)
         return
@@ -32,17 +32,21 @@ def handle_render_projection(
         show_toast_callback("Selecione um arquivo de Mesh (.ply/.obj) válido!", is_error=True)
         return
 
-    # 3. Validação do Nome da Pasta de Saída
+    # 3. Validação do Nome do Projeto
     folder_name_clean = output_folder_name.strip()
     if not folder_name_clean:
-        show_toast_callback("Preencha o nome da pasta de saída!", is_error=True)
+        show_toast_callback("Preencha o nome do projeto!", is_error=True)
         return
 
-    # Definição do caminho fixo em data/out/projection/<nome_da_pasta>
-    output_dir = Path("data/out/projection") / folder_name_clean
+    # 4. Definição do Diretório de Saída Escolhido ou Fallback para ~/IC_Output/projection
+    base_out: Optional[Path] = selected_paths.get("projection_out")
+    if not base_out:
+        base_out = Path(get_user_home_dir()) / "IC_Output" / "projection"
+
+    output_dir = base_out / folder_name_clean
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # 4. Início do Processamento
+    # 5. Início do Processamento
     set_ui_state_callback(True, "Renderizando vistas sintéticas...")
 
     try:

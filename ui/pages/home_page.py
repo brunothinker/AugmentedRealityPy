@@ -1,51 +1,52 @@
-from typing import Callable, Dict
 from pathlib import Path
+from typing import Callable, Dict
 import flet as ft
 
 from ui.theme import (
-    COLOR_PRIMARY,
-    COLOR_ICON,
-    COLOR_TEXT,
-    COLOR_SUBTEXT,
     COLOR_CARD_BG,
     COLOR_CARD_HOVER,
+    COLOR_PRIMARY,
+    COLOR_SUBTEXT,
+    COLOR_TEXT,
 )
 
 
 def create_home_page(
-        page: ft.Page,
-        selected_paths: Dict[str, Path],
-        on_navigate: Callable[[str], None]
+    page: ft.Page,
+    selected_paths: Dict[str, Path],
+    on_navigate: Callable[[str], None]
 ) -> ft.Container:
-    """
-    Página Inicial com os módulos da aplicação em formato de lista.
-    """
+    """Página Inicial com os módulos da aplicação em formato de lista estilizada."""
 
     def build_module_card(
-            title: str,
-            description: str,
-            icon: str,
-            route_key: str
+        title: str,
+        description: str,
+        icon: str,
+        route_key: str
     ) -> ft.Container:
         return ft.Container(
-            content=ft.Row([
-                # Lado Esquerdo: Ícone + Título
-                ft.Row([
-                    ft.Icon(icon, size=26, color=COLOR_PRIMARY),
-                    ft.Text(title, size=15, weight="bold", color=COLOR_TEXT),
-                ], spacing=12, alignment=ft.MainAxisAlignment.START),
-
-                # Lado Direito: Descrição
-                ft.Text(
-                    description,
-                    size=12,
-                    color=COLOR_SUBTEXT,
-                    text_align=ft.TextAlign.RIGHT,
-                    expand=True
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER
+            content=ft.Row(
+                [
+                    # Lado Esquerdo: Ícone + Título
+                    ft.Row(
+                        [
+                            ft.Icon(icon, size=26, color=COLOR_PRIMARY),
+                            ft.Text(title, size=15, weight="bold", color=COLOR_TEXT),
+                        ],
+                        spacing=12,
+                        alignment=ft.MainAxisAlignment.START,
+                    ),
+                    # Lado Direito: Descrição
+                    ft.Text(
+                        description,
+                        size=12,
+                        color=COLOR_SUBTEXT,
+                        text_align=ft.TextAlign.RIGHT,
+                        expand=True,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             width=650,
             padding=ft.padding.symmetric(horizontal=20, vertical=16),
@@ -56,46 +57,48 @@ def create_home_page(
             on_hover=lambda e: setattr(
                 e.control,
                 "bgcolor",
-                COLOR_CARD_HOVER if e.data == "true" else COLOR_CARD_BG
-            ) or e.control.update(),
+                COLOR_CARD_HOVER if e.data == "true" else COLOR_CARD_BG,
+            )
+            or e.control.update(),
         )
 
+    # Módulos principais mapeados para as rotas do Roteador
     modules = [
         {
             "title": "Aquisição",
-            "description": "Captura e gerenciamento de conjuntos de imagens.",
-            "icon": ft.icons.CAMERA_ENHANCE,
-            "route_key": "acquisition"
+            "description": "Extração de frames e gerenciamento temporal de vídeos.",
+            "icon": ft.icons.MOVIE_CREATION,
+            "route_key": "acquisition",
         },
         {
             "title": "Calibração",
-            "description": "Calibração intrínseca e estéreo de câmeras.",
+            "description": "Calibração intrínseca monocular e estéreo de câmeras.",
             "icon": ft.icons.CAMERA_ALT,
-            "route_key": "calibration_hub"
+            "route_key": "calibration",
         },
         {
             "title": "Reconstrução 3D",
-            "description": "Pipelines de reconstrução Monocular e Estéreo.",
-            "icon": ft.icons.VIEW_IN_AR,
-            "route_key": "reconstruction_hub"
+            "description": "Pipelines de reconstrução Monocular (SfM) e Estéreo.",
+            "icon": ft.icons.LAYERS,
+            "route_key": "reconstruction",
         },
         {
             "title": "Pós-Processamento",
-            "description": "Filtros, CLAHE e redimensionamento em lote.",
+            "description": "Filtros de contraste (CLAHE) e redimensionamento em lote.",
             "icon": ft.icons.TUNE,
-            "route_key": "post_processing_hub"
+            "route_key": "post_processing",
         },
         {
             "title": "Projeção 3D",
             "description": "Renderização de vistas sintéticas via COLMAP e PyVista.",
             "icon": ft.icons.CAMERA_OUTDOOR,
-            "route_key": "projection"
+            "route_key": "projection",
         },
         {
             "title": "Visualização 3D",
-            "description": "Visualizador de nuvens de pontos e malhas 3D.",
+            "description": "Inspeção e visualizador de nuvens de pontos e malhas.",
             "icon": ft.icons.VIEW_IN_AR,
-            "route_key": "visualization"
+            "route_key": "visualization",
         },
     ]
 
@@ -108,11 +111,12 @@ def create_home_page(
                     title=mod["title"],
                     description=mod["description"],
                     icon=mod["icon"],
-                    route_key=mod["route_key"]
-                ) for mod in modules
+                    route_key=mod["route_key"],
+                )
+                for mod in modules
             ],
             spacing=12,
             alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER
-        )
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
     )
