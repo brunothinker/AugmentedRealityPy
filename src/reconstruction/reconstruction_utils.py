@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any
 import json
-
+import shutil
 
 
 class ColmapCommandBuilder:
@@ -104,3 +104,47 @@ def setup_rig(caminho_arquivo_json: Path, baseline_metros: float):
         json.dump(config_rig, f, indent=4)
 
     return caminho_arquivo_json
+
+
+def copiar_configs_resources(pasta_projeto_saida: Path, pasta_resources: Path = None):
+    """Copia todos os arquivos .ini da pasta 'resources' para uma subpasta 'configs'
+    no diretório de saída do projeto.
+    """
+    if pasta_resources is None:
+        # Encontra a raiz do projeto (subindo de src/reconstruction para a raiz)
+        pasta_resources = (
+            Path(__file__).resolve().parent.parent.parent / "resources"
+        )
+
+    if not pasta_resources.exists():
+        logging.warning(
+            f"Pasta de resources não encontrada em: {pasta_resources}"
+        )
+        return
+
+    # Organiza os .ini dentro de uma pasta dedicada 'configs'
+    pasta_destino_configs = pasta_projeto_saida / "configs"
+    pasta_destino_configs.mkdir(parents=True, exist_ok=True)
+
+    for arquivo_ini in pasta_resources.glob("*.ini"):
+        destino = pasta_destino_configs / arquivo_ini.name
+        shutil.copy2(arquivo_ini, destino)
+        logging.info(
+            f"Configuração copiada: {arquivo_ini.name} -> configs/{destino.name}"
+        )
+
+
+def limpar_arquivos_intermediarios(pasta_projeto_saida: Path):
+    """
+    Remove arquivos e subpastas intermediárias pesadas geradas pelo COLMAP (como dense/stereo),
+    mantendo apenas a malha final, nuvem fusionada, banco de dados e arquivos de configuração.
+    """
+    pasta_stereo_temp = pasta_projeto_saida / "dense" / "stereo"
+
+    if pasta_stereo_temp.exists() and pasta_stereo_temp.is_dir():
+        try:
+            shutil.rmtree(pasta_stereo_temp)
+            logging.info("Limpeza concluída: Subpasta 'dense/stereo' removida com sucesso.")
+            print("[LIMPEZA] Arquivos temporários pesados de profundidade foram removidos.")
+        except Exception as e:
+            logging.warning(f"Falha ao remover arquivos temporários de 'dense/stereo': {e}")

@@ -1,14 +1,26 @@
+import logging
 import time
+from pathlib import Path
 from tqdm import tqdm
-from src.reconstruction.reconstruction_utils import *
 
+from src.reconstruction.reconstruction_utils import (
+    ColmapCommandBuilder,
+    copiar_configs_resources,
+    limpar_arquivos_intermediarios,
+    run_command,
+    setup_logger,
+    setup_rig,
+)
 
 
 def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, baseline_metros: float, progress_callback=None) -> bool:
-    """Pipeline COLMAP Estéreo atualizado para versões novas (substitui rig_bundle_adjuster) com suporte a feedback na UI."""
+    """Pipeline COLMAP Estéreo com suporte a Rig JSON, escala real, logs e limpeza pós-processamento."""
 
     pasta_projeto_saida.mkdir(parents=True, exist_ok=True)
     arquivo_log = setup_logger(pasta_projeto_saida)
+
+    # Copia as configurações .ini usadas nesta execução
+    copiar_configs_resources(pasta_projeto_saida)
 
     # Definição de caminhos
     db_path = pasta_projeto_saida / "database.db"
@@ -33,7 +45,6 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
     # --- DEFINIÇÃO DAS ETAPAS ATUALIZADAS ---
     etapas = [
-
         # Etapa 1: Feature Extractor
         (constructor.build("feature_extractor", {
             "database_path": db_path,
@@ -54,7 +65,7 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
             "output_path": pasta_esparsa
         }), "Reconstrução Esparsa (Inicial)"),
 
-        # Etapa 4a: Rig Configurator (NOVO: Vincula o JSON ao modelo esparso)
+        # Etapa 4a: Rig Configurator (Vincula o JSON ao modelo esparso)
         (constructor.build("rig_configurator", {
             "database_path": db_path,
             "input_path": pasta_esparsa / "0",
@@ -62,7 +73,7 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
             "output_path": pasta_esparsa_rigged_init
         }), "Configuração do Rig"),
 
-        # Etapa 4b: Bundle Adjuster (NOVO: Otimiza o rig em escala real)
+        # Etapa 4b: Bundle Adjuster (Otimiza o rig em escala real)
         (constructor.build("bundle_adjuster", {
             "input_path": pasta_esparsa_rigged_init,
             "output_path": pasta_esparsa_rig_final,
@@ -98,6 +109,7 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
     print(f"\n[RECONSTRUÇÃO ESTÉREO] Iniciando pipeline para: {pasta_projeto_saida.name}")
     print(f"[INFO] Baseline: {baseline_metros}m")
+    print(f"[LOG] Acompanhe os detalhes técnicos em: {arquivo_log.name}\n")
 
     total_etapas = len(etapas)
     try:
@@ -117,7 +129,7 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
                 tqdm.write(f"[TIMER] '{descricao}' concluída em {tempo_decorrido:.2f} segundos.")
                 logging.info(f"--- TEMPO '{descricao}': {tempo_decorrido:.2f}s ---")
 
-                # Verificações de segurança ajustadas aos novos índices
+                # Verificações de segurança
                 if "Reconstrução Esparsa" in descricao and not (pasta_esparsa / "0").exists():
                     raise Exception("Falha no Mapper: Câmeras não conectaram.")
 
@@ -126,6 +138,9 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
                 barra.update(1)
 
+        # Etapa de pós-processamento: Limpeza dos temporários pesados
+        limpar_arquivos_intermediarios(pasta_projeto_saida)
+
         if progress_callback:
             progress_callback(1.0, "Reconstrução Estéreo concluída!")
         print("\n[SUCESSO] Reconstrução Estéreo finalizada na escala real!")
@@ -133,5 +148,6 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
     except Exception as erro:
         print(f"\n[ERRO FATAL] O pipeline estéreo falhou: {erro}")
+        print(f"[INFO] Verifique o arquivo {arquivo_log.name} para mais detalhes.")
         logging.error(f"Erro fatal no pipeline estéreo: {erro}")
         return False

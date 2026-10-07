@@ -1,17 +1,25 @@
+import logging
 import time
+from pathlib import Path
 from tqdm import tqdm
-from src.reconstruction.reconstruction_utils import *
 
+from src.reconstruction.reconstruction_utils import (
+    ColmapCommandBuilder,
+    copiar_configs_resources,
+    limpar_arquivos_intermediarios,
+    run_command,
+    setup_logger,
+)
 
 
 def run_mono_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, progress_callback=None) -> bool:
-    """Pipeline COLMAP em 7 etapas com suporte automático para Mono e Stereo via pastas e integração de logs na UI."""
-
-    # Configurações globais que podem ser mescladas nos dicionários de parâmetros depois
-    CONFIG = {"threads": -1, "use_gpu": 1, "max_img_size": 4000}
+    """Pipeline COLMAP Monocular em 7 etapas com suporte a cópia de configs, logs e limpeza pós-processamento."""
 
     pasta_projeto_saida.mkdir(parents=True, exist_ok=True)
     arquivo_log = setup_logger(pasta_projeto_saida)
+
+    # Copia as configurações .ini usadas nesta execução
+    copiar_configs_resources(pasta_projeto_saida)
 
     # Definição de caminhos usando Path puro
     db_path = pasta_projeto_saida / "database.db"
@@ -98,6 +106,9 @@ def run_mono_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, progr
                     raise Exception("Modelo esparso não gerado. Verifique a qualidade das fotos ou a calibração.")
 
                 barra.update(1)
+
+        # Etapa de pós-processamento: Limpeza dos temporários pesados
+        limpar_arquivos_intermediarios(pasta_projeto_saida)
 
         if progress_callback:
             progress_callback(1.0, "Reconstrução finalizada com sucesso!")
