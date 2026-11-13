@@ -1,6 +1,8 @@
 import logging
 import time
 from pathlib import Path
+
+import yaml
 from tqdm import tqdm
 
 from src.reconstruction.reconstruction_utils import (
@@ -14,22 +16,25 @@ from src.reconstruction.reconstruction_utils import (
 
 
 def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, baseline_metros: float, progress_callback=None) -> bool:
-    """Pipeline COLMAP Estéreo com suporte a Rig JSON, escala real, logs e limpeza pós-processamento."""
+    """Pipeline COLMAP Estéreo utilizando parâmetros do colmap_config.yaml."""
 
     pasta_projeto_saida.mkdir(parents=True, exist_ok=True)
     arquivo_log = setup_logger(pasta_projeto_saida)
 
-    # Copia as configurações .ini usadas nesta execução
-    copiar_configs_resources(pasta_projeto_saida)
+    # Copia o colmap_config.yaml para a pasta do projeto e obtém o caminho de destino
+    caminho_yaml_copiado = copiar_configs_resources(pasta_projeto_saida)
 
-    # Definição de caminhos
+    # Carrega os parâmetros do YAML registrado
+    config_yaml = {}
+    if caminho_yaml_copiado and caminho_yaml_copiado.exists():
+        with open(caminho_yaml_copiado, "r", encoding="utf-8") as f:
+            config_yaml = yaml.safe_load(f) or {}
+
+    # Definição dos caminhos
     db_path = pasta_projeto_saida / "database.db"
     pasta_esparsa = pasta_projeto_saida / "sparse"
-
-    # Caminhos específicos para o processo de RIG
     pasta_esparsa_rigged_init = pasta_esparsa / "0_rigged"
     pasta_esparsa_rig_final = pasta_esparsa / "rig"
-
     pasta_densa = pasta_projeto_saida / "dense"
     arquivo_rig = pasta_projeto_saida / "rig_config.json"
 
@@ -40,13 +45,14 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
     constructor = ColmapCommandBuilder()
 
-    # Gera o arquivo JSON antes da execução
+    # Gera o arquivo JSON do rig
     setup_rig(arquivo_rig, baseline_metros)
 
-    # --- DEFINIÇÃO DAS ETAPAS ATUALIZADAS ---
+    # --- DEFINIÇÃO DAS ETAPAS UNIFICANDO YAML + SOBREPOSIÇÕES ESTÉREO ---
     etapas = [
-        # Etapa 1: Feature Extractor
+        # Etapa 1: Feature Extractor (sobrescreve flags específicas do rig)
         (constructor.build("feature_extractor", {
+            **config_yaml.get("feature_extractor", {}),
             "database_path": db_path,
             "image_path": pasta_frames,
             "ImageReader.single_camera_per_folder": True,
@@ -55,17 +61,19 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
         # Etapa 2: Matcher
         (constructor.build("sequential_matcher", {
+            **config_yaml.get("sequential_matcher", {}),
             "database_path": db_path
         }), "Matcher Sequencial"),
 
         # Etapa 3: Mapper
         (constructor.build("mapper", {
+            **config_yaml.get("mapper", {}),
             "database_path": db_path,
             "image_path": pasta_frames,
             "output_path": pasta_esparsa
         }), "Reconstrução Esparsa (Inicial)"),
 
-        # Etapa 4a: Rig Configurator (Vincula o JSON ao modelo esparso)
+        # Etapa 4a: Rig Configurator
         (constructor.build("rig_configurator", {
             "database_path": db_path,
             "input_path": pasta_esparsa / "0",
@@ -73,7 +81,7 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
             "output_path": pasta_esparsa_rigged_init
         }), "Configuração do Rig"),
 
-        # Etapa 4b: Bundle Adjuster (Otimiza o rig em escala real)
+        # Etapa 4b: Bundle Adjuster
         (constructor.build("bundle_adjuster", {
             "input_path": pasta_esparsa_rigged_init,
             "output_path": pasta_esparsa_rig_final,
@@ -81,8 +89,9 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
             "BundleAdjustment.refine_sensor_from_rig": False
         }), "Ajuste de Bundle (Escala Real)"),
 
-        # Etapa 5: Undistorter (Usa o modelo final do Rig)
+        # Etapa 5: Undistorter
         (constructor.build("image_undistorter", {
+            **config_yaml.get("image_undistorter", {}),
             "image_path": pasta_frames,
             "input_path": pasta_esparsa_rig_final,
             "output_path": pasta_densa,
@@ -91,21 +100,26 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
         # Etapa 6: Patch Match
         (constructor.build("patch_match_stereo", {
+            **config_yaml.get("patch_match_stereo", {}),
             "workspace_path": pasta_densa
         }), "Estéreo Patch Match"),
 
         # Etapa 7: Fusion
         (constructor.build("stereo_fusion", {
+            **config_yaml.get("stereo_fusion", {}),
             "workspace_path": pasta_densa,
             "output_path": pasta_densa / "modelo_fusionado.ply"
         }), "Fusão (Point Cloud)"),
 
         # Etapa 8: Poisson Mesher
         (constructor.build("poisson_mesher", {
+            **config_yaml.get("poisson_mesher", {}),
             "input_path": pasta_densa / "modelo_fusionado.ply",
             "output_path": pasta_densa / "malha_final.ply"
         }), "Geração de Malha (Poisson)")
     ]
+
+    etapas = etapas[8:] #Travando etapa de teste
 
     print(f"\n[RECONSTRUÇÃO ESTÉREO] Iniciando pipeline para: {pasta_projeto_saida.name}")
     print(f"[INFO] Baseline: {baseline_metros}m")
@@ -129,7 +143,6 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
                 tqdm.write(f"[TIMER] '{descricao}' concluída em {tempo_decorrido:.2f} segundos.")
                 logging.info(f"--- TEMPO '{descricao}': {tempo_decorrido:.2f}s ---")
 
-                # Verificações de segurança
                 if "Reconstrução Esparsa" in descricao and not (pasta_esparsa / "0").exists():
                     raise Exception("Falha no Mapper: Câmeras não conectaram.")
 
@@ -138,7 +151,6 @@ def run_stereo_reconstruction(pasta_frames: Path, pasta_projeto_saida: Path, bas
 
                 barra.update(1)
 
-        # Etapa de pós-processamento: Limpeza dos temporários pesados
         limpar_arquivos_intermediarios(pasta_projeto_saida)
 
         if progress_callback:

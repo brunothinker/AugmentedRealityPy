@@ -46,3 +46,10 @@ out/
 # ======================
 .DS_Store
 Thumbs.db
+
+
+#Yolo
+yolo_evaluator/dataset/*
+yolo_evaluator/runs/caixa_model/*
+yolov8n.pt
+weights/*

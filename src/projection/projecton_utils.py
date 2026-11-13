@@ -1,11 +1,41 @@
 import os
-import struct
-import numpy as np
 import shutil
+import struct
+from pathlib import Path
 
+import numpy as np
 
 """COLMAP BINARY READING UTILITIES"""
 
+def resolve_colmap_bin_dir(base_dir: str) -> str:
+    """
+    Locates the exact directory containing cameras.bin and images.bin.
+    Accepts either the exact sparse model folder (e.g., .../sparse/0)
+    or a parent reconstruction directory.
+    """
+    base_path = Path(base_dir).expanduser().resolve()
+
+    if not base_path.exists():
+        raise FileNotFoundError(f"Diretório informado não existe: {base_path}")
+
+    # 1. Verifica se já está na pasta exata
+    if (base_path / "cameras.bin").exists() and (base_path / "images.bin").exists():
+        return str(base_path)
+
+    # 2. Verifica o padrão clássico do COLMAP (sparse/0)
+    sparse_zero = base_path / "sparse" / "0"
+    if (sparse_zero / "cameras.bin").exists() and (sparse_zero / "images.bin").exists():
+        return str(sparse_zero)
+
+    # 3. Busca recursiva caso haja outro índice (ex: sparse/1) ou subpasta
+    for cam_file in sorted(base_path.rglob("cameras.bin")):
+        candidate_dir = cam_file.parent
+        if (candidate_dir / "images.bin").exists():
+            return str(candidate_dir)
+
+    raise FileNotFoundError(
+        f"Arquivos 'cameras.bin' e 'images.bin' não encontrados em '{base_path}' nem em suas subpastas."
+    )
 
 def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     """Reads bytes from the binary file and unpacks them according to the format."""

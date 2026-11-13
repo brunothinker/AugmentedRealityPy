@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
+
 import yaml
 from ultralytics import YOLO
 
@@ -12,7 +13,7 @@ def create_yolo_label(
         output_txt_path: Path,
         img_width: int,
         img_height: int,
-        bbox_pixels: Tuple[float, float, float, float],
+        bbox_pixels: tuple[float, float, float, float],
         class_id: int = 0,
 ) -> Path:
     """Converte coordenadas em pixels (x_min, y_min, x_max, y_max) para o formato
@@ -76,7 +77,7 @@ class YOLOBoxEvaluator:
 
     def evaluate_projection(
             self, image_path: Path, conf_threshold: float = 0.10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Avalia uma imagem de projeção 2D e retorna a métrica de confiança da detecção."""
         img_path = Path(image_path).resolve()
         if not img_path.exists():
@@ -86,7 +87,7 @@ class YOLOBoxEvaluator:
             source=str(img_path), conf=conf_threshold, verbose=False
         )
 
-        detections: List[Dict[str, Any]] = []
+        detections: list[dict[str, Any]] = []
         max_confidence = 0.0
 
         for r in results:
@@ -95,8 +96,7 @@ class YOLOBoxEvaluator:
                 cls_id = int(box.cls[0])
                 xyxy = box.xyxy[0].tolist()
 
-                if conf > max_confidence:
-                    max_confidence = conf
+                max_confidence = max(max_confidence, conf)
 
                 detections.append(
                     {"class_id": cls_id, "confidence": conf, "bbox_xyxy": xyxy}
@@ -112,14 +112,14 @@ class YOLOBoxEvaluator:
 
     def evaluate_directory(
             self, dir_path: Path, conf_threshold: float = 0.10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Avalia todas as imagens (.jpg, .jpeg, .png) dentro de um diretório e suas subpastas."""
         dir_path = Path(dir_path).resolve()
         if not dir_path.exists():
             raise FileNotFoundError(f"Diretório não encontrado: {dir_path}")
 
         extensions = ("*.jpg", "*.jpeg", "*.png", "*.JPG", "*.PNG")
-        image_files: List[Path] = []
+        image_files: list[Path] = []
 
         # Busca recursiva em todas as subpastas (ex: esquerda, direita)
         for ext in extensions:

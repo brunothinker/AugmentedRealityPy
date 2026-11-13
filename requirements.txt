@@ -9,3 +9,6 @@ tqdm
 flet==0.21.2
 # Backend / Comunicação
 PyYAML
+
+#Yolo
+ultralytics

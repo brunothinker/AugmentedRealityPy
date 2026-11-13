@@ -1,6 +1,5 @@
-import sys
 from pathlib import Path
-from typing import Dict
+
 import flet as ft
 
 from ui.app_layout import create_app_layout
@@ -15,7 +14,7 @@ def start_gui():
         page.window_height = 768
         page.window_center()
 
-        selected_paths: Dict[str, Path] = {}
+        selected_paths: dict[str, Path] = {}
         page.add(create_app_layout(page, selected_paths))
     ft.app(target=main_ui)
 

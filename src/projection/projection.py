@@ -1,9 +1,15 @@
-import os
 import math
+import os
+from pathlib import Path
+
 import numpy as np
 import pyvista as pv
 
-from src.projection.projecton_utils import read_cameras_binary, read_images_binary, organize_output_by_camera
+from src.projection.projecton_utils import (
+    read_cameras_binary,
+    read_images_binary,
+    resolve_colmap_bin_dir,
+)
 
 
 def render_synthetic_views(colmap_dir, mesh_path, output_dir):
@@ -13,18 +19,24 @@ def render_synthetic_views(colmap_dir, mesh_path, output_dir):
     """
     os.makedirs(output_dir, exist_ok=True)
 
-    # 1. Load binary data
-    print("Reading COLMAP binaries...")
-    cameras = read_cameras_binary(os.path.join(colmap_dir, "cameras.bin"))
-    images = read_images_binary(os.path.join(colmap_dir, "images.bin"))
+    # 1. Resolve and load binary data automatically
+    resolved_bin_dir = resolve_colmap_bin_dir(colmap_dir)
+    print(f"Reading COLMAP binaries from: {resolved_bin_dir}")
+
+    cameras = read_cameras_binary(os.path.join(resolved_bin_dir, "cameras.bin"))
+    images = read_images_binary(os.path.join(resolved_bin_dir, "images.bin"))
 
     # 2. Load the 3D object Mesh
-    print(f"Loading 3D object: {mesh_path}")
-    mesh = pv.read(mesh_path)
+    mesh_file = Path(mesh_path).expanduser().resolve()
+    if not mesh_file.exists():
+        raise FileNotFoundError(f"Malha 3D não encontrada: {mesh_file}")
+
+    print(f"Loading 3D object: {mesh_file}")
+    mesh = pv.read(str(mesh_file))
 
     # Prepare the plotter with adjusted lighting
     plotter = pv.Plotter(off_screen=True)
-    plotter.enable_eye_dome_lighting()  # Improves shading and contrast without changing the color tone
+    plotter.enable_eye_dome_lighting()  # type: ignore[call-arg]
 
     # Dynamic color / texture configuration
     if mesh.active_scalars_name is not None or "RGB" in mesh.point_data or "Colors" in mesh.point_data:
@@ -81,19 +93,3 @@ def render_synthetic_views(colmap_dir, mesh_path, output_dir):
 
     plotter.close()
     print("Projection process completed successfully!")
-
-
-
-# ==============================================================================
-# ISOLATED TEST EXECUTABLE
-# ==============================================================================
-if __name__ == "__main__":
-    COLMAP_BIN_DIR = "/home/bhzinn/Workspace/ProjectsPy/AugmentedRealityPy/data/out/reconstructions/TesteWindowsRadius17/sparse/0"
-    MESH_FILE = "/home/bhzinn/Workspace/ProjectsPy/AugmentedRealityPy/data/out/reconstructions/TesteWindowsRadius17/dense/malha_final.ply"
-    OUTPUT_FOLDER = "/home/bhzinn/Downloads/teste_projection"
-
-    # 1. Executes the projection of the synthetic views
-    render_synthetic_views(COLMAP_BIN_DIR, MESH_FILE, OUTPUT_FOLDER)
-
-    # 2. Separates the generated files by camera type (1x and uw)
-    organize_output_by_camera(OUTPUT_FOLDER)

@@ -1,0 +1,232 @@
+# ==============================================================================
+# CONFIGURAÇÃO COLMAP - FOCO EM QUALIDADE (16GB RAM + 16GB SWAP / 8GB VRAM)
+# Máquina dedicada ao projeto (~12GB de RAM livres para o COLMAP).
+# O gargalo real é a VRAM (8GB): ela é controlada principalmente por
+#   max_image_size, window_radius, num_samples e num_patch_match_src_images.
+# Se der "out of memory" na GPU, veja a seção "SE ESTOURAR" no final.
+# ==============================================================================
+
+global:
+  random_seed: 0
+  log_to_stderr: 1
+  log_level: 0
+
+# ------------------------------------------------------------------------------
+# 1. EXTRAÇÃO DE FEATURES
+# ------------------------------------------------------------------------------
+feature_extractor:
+  camera_mode: -1
+  descriptor_normalization: "l1_root"
+  ImageReader.camera_model: "SIMPLE_RADIAL"
+  ImageReader.single_camera: 0
+  ImageReader.single_camera_per_folder: 0
+  ImageReader.single_camera_per_image: 0
+  ImageReader.existing_camera_id: -1
+  ImageReader.default_focal_length_factor: 1.2
+  SiftExtraction.num_threads: 6
+  SiftExtraction.use_gpu: 1
+  SiftExtraction.gpu_index: -1
+  SiftExtraction.max_image_size: 3200       # era 2560. Se ainda der "CuTexImage out of memory", use 2800 ou 2560
+  SiftExtraction.max_num_features: 16384    # era 8192
+  SiftExtraction.peak_threshold: 0.004
+  SiftExtraction.edge_threshold: 12
+  SiftExtraction.first_octave: 0            # voltou a 0: -1 dobra a imagem (3200 -> 6400px) e estourou a VRAM no SIFT GPU
+  SiftExtraction.num_octaves: 4
+  SiftExtraction.octave_resolution: 4
+  SiftExtraction.estimate_affine_shape: 0   # só funciona na CPU (bem mais lento)
+  SiftExtraction.max_num_orientations: 2
+  SiftExtraction.upright: 0
+  SiftExtraction.domain_size_pooling: 0     # só na CPU (bem mais lento)
+  SiftExtraction.dsp_min_scale: 0.1
+  SiftExtraction.dsp_max_scale: 6
+  SiftExtraction.dsp_num_scales: 15
+
+# ------------------------------------------------------------------------------
+# 2. MATCHERS (SEQUENCIAL E EXAUSTIVO)
+# Para objeto fotografado em volta, EXAUSTIVO é o melhor (se < ~800 fotos).
+# ------------------------------------------------------------------------------
+sequential_matcher:
+  SiftMatching.num_threads: 6
+  SiftMatching.use_gpu: 1
+  SiftMatching.gpu_index: -1
+  SiftMatching.max_ratio: 0.8               # era 0.7 (mais matches candidatos; a geometria filtra depois)
+  SiftMatching.max_distance: 0.7            # era 0.6
+  SiftMatching.cross_check: 1
+  SiftMatching.guided_matching: 1           # era 0; recupera matches extras, roda na GPU
+  SiftMatching.max_num_matches: 16384       # era 10000 (32768 também derrubou o matcher na GPU)
+  TwoViewGeometry.min_num_inliers: 30       # era 75; 75 descartava pares fracos e quebrava a conectividade
+  TwoViewGeometry.multiple_models: 0
+  TwoViewGeometry.compute_relative_pose: 1
+  TwoViewGeometry.max_error: 3              # era 2
+  TwoViewGeometry.confidence: 0.999
+  TwoViewGeometry.max_num_trials: 200000
+  TwoViewGeometry.min_inlier_ratio: 0.25    # era 0.35
+  SequentialMatching.overlap: 20            # era 10
+  SequentialMatching.loop_detection: 0
+
+exhaustive_matcher:
+  SiftMatching.num_threads: 6
+  SiftMatching.use_gpu: 1
+  SiftMatching.gpu_index: -1
+  SiftMatching.max_ratio: 0.8
+  SiftMatching.max_distance: 0.7
+  SiftMatching.cross_check: 1
+  SiftMatching.guided_matching: 1
+  SiftMatching.max_num_matches: 16384
+  TwoViewGeometry.min_num_inliers: 30
+  TwoViewGeometry.multiple_models: 0
+  TwoViewGeometry.compute_relative_pose: 1
+  TwoViewGeometry.max_error: 3
+  TwoViewGeometry.confidence: 0.999
+  TwoViewGeometry.max_num_trials: 200000
+  TwoViewGeometry.min_inlier_ratio: 0.25
+  ExhaustiveMatching.block_size: 100        # era 50
+
+# ------------------------------------------------------------------------------
+# 3. MAPPER (RECONSTRUÇÃO ESPARSA / SFM)
+# ------------------------------------------------------------------------------
+mapper:
+  Mapper.ignore_watermarks: 0
+  Mapper.multiple_models: 1
+  Mapper.extract_colors: 1
+  Mapper.ba_refine_focal_length: 1
+  Mapper.ba_refine_principal_point: 0
+  Mapper.ba_refine_extra_params: 1
+  Mapper.fix_existing_frames: 0
+  Mapper.tri_ignore_two_view_tracks: 1
+  Mapper.min_num_matches: 15                # era 30
+  Mapper.max_num_models: 50
+  Mapper.max_model_overlap: 20
+  Mapper.min_model_size: 10
+  Mapper.init_image_id1: -1
+  Mapper.init_image_id2: -1
+  Mapper.init_num_trials: 200
+  Mapper.num_threads: -1
+  Mapper.ba_min_num_residuals_for_cpu_multi_threading: 50000
+  Mapper.ba_local_num_images: 6
+  Mapper.ba_local_max_num_iterations: 25    # era 16
+  Mapper.ba_global_frames_freq: 250         # era 500; BA global mais frequente = menos drift
+  Mapper.ba_global_points_freq: 100000      # era 250000
+  Mapper.ba_global_max_num_iterations: 50   # era 33
+  Mapper.ba_global_max_refinements: 5       # era 2
+  Mapper.ba_local_max_refinements: 3        # era 2
+  Mapper.snapshot_frames_freq: 0
+  Mapper.init_min_num_inliers: 100          # era 120
+  Mapper.init_max_reg_trials: 2
+  Mapper.abs_pose_min_num_inliers: 30       # era 40
+  Mapper.max_reg_trials: 3
+  Mapper.tri_max_transitivity: 1
+  Mapper.tri_complete_max_transitivity: 5
+  Mapper.tri_re_max_trials: 1
+  Mapper.min_focal_length_ratio: 0.1
+  Mapper.max_focal_length_ratio: 10
+  Mapper.max_extra_param: 1
+  Mapper.ba_local_function_tolerance: 0
+  Mapper.ba_global_frames_ratio: 1.1        # era 1.21
+  Mapper.ba_global_points_ratio: 1.1        # era 1.21
+  Mapper.ba_global_function_tolerance: 0
+  Mapper.ba_global_max_refinement_change: 0.0005
+  Mapper.ba_local_max_refinement_change: 0.001
+  Mapper.init_max_error: 3
+  Mapper.init_max_forward_motion: 0.95
+  Mapper.init_min_tri_angle: 16
+  Mapper.abs_pose_max_error: 12
+  Mapper.abs_pose_min_inlier_ratio: 0.25    # era 0.30
+  Mapper.filter_max_reproj_error: 2
+  Mapper.filter_min_tri_angle: 1.5
+  Mapper.local_ba_min_tri_angle: 6
+  Mapper.tri_create_max_angle_error: 2
+  Mapper.tri_continue_max_angle_error: 2
+  Mapper.tri_merge_max_reproj_error: 3
+  Mapper.tri_complete_max_reproj_error: 3
+  Mapper.tri_re_max_angle_error: 5
+  Mapper.tri_re_min_ratio: 0.2
+  Mapper.tri_min_angle: 1.5
+
+# ------------------------------------------------------------------------------
+# 4. UNDISTORTER (RETIFICAÇÃO DE IMAGENS)
+# Aqui estava o maior limitador de qualidade: max_image_size 2000 e só 10 vizinhas.
+# ------------------------------------------------------------------------------
+image_undistorter:
+  output_type: "COLMAP"
+  copy_policy: "copy"
+  num_patch_match_src_images: 30            # era 10; com ~80 fotos totais, 30 vizinhas dão boa redundância para áreas refletivas
+  blank_pixels: 0
+  min_scale: 0.2
+  max_scale: 2
+  max_image_size: 3600                      # v4: voltou a 3600 (4000 estourou a VRAM na passada geométrica do PatchMatch). Não faz upscale
+  roi_min_x: 0
+  roi_min_y: 0
+  roi_max_x: 1
+  roi_max_y: 1
+
+# ------------------------------------------------------------------------------
+# 5. PATCH MATCH STEREO (RECONSTRUÇÃO DENSA) - usa a VRAM
+# ------------------------------------------------------------------------------
+patch_match_stereo:
+  workspace_format: "COLMAP"
+  pmvs_option_name: "option-all"
+  PatchMatchStereo.max_image_size: 3600     # v4: 4000 -> 3600 (valor da v2, que rodou até o fim). Igual ao undistorter e à fusão
+  PatchMatchStereo.gpu_index: 0
+  PatchMatchStereo.depth_min: -1
+  PatchMatchStereo.depth_max: -1
+  PatchMatchStereo.window_radius: 9         # mantido em 9: ajuda a tapar falhas nas áreas refletivas (10-11 se ainda houver buracos)
+  PatchMatchStereo.window_step: 1
+  PatchMatchStereo.sigma_spatial: -1
+  PatchMatchStereo.sigma_color: 0.25
+  PatchMatchStereo.num_samples: 15
+  PatchMatchStereo.ncc_sigma: 0.6
+  PatchMatchStereo.min_triangulation_angle: 1
+  PatchMatchStereo.incident_angle_sigma: 0.9
+  PatchMatchStereo.num_iterations: 7        # era 5
+  PatchMatchStereo.geom_consistency: 1
+  PatchMatchStereo.geom_consistency_regularizer: 0.3
+  PatchMatchStereo.geom_consistency_max_cost: 3
+  PatchMatchStereo.filter: 1
+  PatchMatchStereo.filter_min_ncc: 0.1
+  PatchMatchStereo.filter_min_triangulation_angle: 3
+  PatchMatchStereo.filter_min_num_consistent: 2
+  PatchMatchStereo.filter_geom_consistency_max_cost: 1.5   # mais tolerante: superfície refletiva muda de aparência entre fotos
+  PatchMatchStereo.cache_size: 6            # v2: 12 -> 6. Com 12 o cache sozinho ocupava ~85% da RAM e empurrava para o swap. Só custa mais leitura de disco
+  PatchMatchStereo.allow_missing_files: 0
+  PatchMatchStereo.write_consistency_graph: 0
+
+# ------------------------------------------------------------------------------
+# 6. STEREO FUSION (NUVEM DE PONTOS) - usa a RAM
+# min_num_pixels 1 e check_num_images 2 geravam muito ruído; voltei a valores sãos.
+# ------------------------------------------------------------------------------
+stereo_fusion:
+  workspace_format: "COLMAP"
+  input_type: "geometric"
+  pmvs_option_name: "option-all"
+  output_type: "PLY"
+  StereoFusion.num_threads: 6
+  StereoFusion.max_image_size: 3600         # v4: igual ao PatchMatch (as cores da nuvem vêm dessa resolução)
+  StereoFusion.min_num_pixels: 3            # era 1 (ruído); 3 porque são poucas fotos
+  StereoFusion.max_num_pixels: 10000        # era 200000
+  StereoFusion.max_traversal_depth: 100
+  StereoFusion.max_reproj_error: 2.0        # v5: voltou a 2.0 (valor da v2, que rodou). 1.5 ficou 3h30 na imagem 1/70 sem avançar (suspeita, não confirmada)
+  StereoFusion.max_depth_error: 0.01
+  StereoFusion.max_normal_error: 10
+  StereoFusion.check_num_images: 30         # era 2; igual a num_patch_match_src_images
+  StereoFusion.cache_size: 12               # v5: 6 -> 12. A fusão roda sozinha (o PatchMatch já terminou), então o cache grande não disputa RAM; com 6 o cache provavelmente ficava trocando imagens o tempo todo
+  StereoFusion.use_cache: 1
+
+# ------------------------------------------------------------------------------
+# 7. POISSON MESHER (GERAÇÃO DE MALHA TRIANGULAR)
+# ------------------------------------------------------------------------------
+poisson_mesher:
+  PoissonMeshing.point_weight: 2            # v3: 1 -> 2 (valor original). Superfície segue mais fielmente os pontos = bordas menos arredondadas/serrilhadas
+  PoissonMeshing.depth: 14                  # v3: 13 -> 14. Cor da malha é por vértice, então mais vértices = textura mais nítida. Se estourar RAM, volte para 13
+  PoissonMeshing.color: 64                  # v3: 32 -> 64. Cor do vértice segue mais de perto a cor dos pontos (menos suavização)
+  PoissonMeshing.trim: 11                   # v3: 10 -> 11. Remove triângulos esticados de baixa densidade (as linhas finas que cruzam a imagem)
+  PoissonMeshing.num_threads: 6
+
+# ==============================================================================
+# SE ESTOURAR (na ordem):
+#   1) Poisson estourando RAM: depth 14 -> 13 (rode só o mesher; a fusão fica salva).
+#   2) PatchMatch "out of memory" na GPU: o PatchMatch faz 2 passadas (fotométrica e depois
+#      geométrica); a geométrica usa mais VRAM e só falha horas depois do início.
+#      Reduza max_image_size (3600 -> 3400) nos três lugares, ou num_patch_match_src_images 30 -> 24.
+#   3) Swap alto na fusão/PatchMatch: cache_size 6 -> 4.
+# ==============================================================================

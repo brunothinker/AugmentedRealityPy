@@ -1,9 +1,9 @@
-import subprocess
-import logging
-from pathlib import Path
-from typing import Dict, Any
 import json
+import logging
 import shutil
+import subprocess
+from pathlib import Path
+from typing import Any
 
 
 class ColmapCommandBuilder:
@@ -13,7 +13,7 @@ class ColmapCommandBuilder:
         self.binario = binario_base
 
 
-    def build(self, modulo: str, parametros: Dict[str, Any]) -> str:
+    def build(self, modulo: str, parametros: dict[str, Any]) -> str:
         """
         Monta o comando shell final.
         Valores booleanos (True/False) são convertidos para 1/0 (padrão COLMAP).
@@ -106,32 +106,29 @@ def setup_rig(caminho_arquivo_json: Path, baseline_metros: float):
     return caminho_arquivo_json
 
 
-def copiar_configs_resources(pasta_projeto_saida: Path, pasta_resources: Path = None):
-    """Copia todos os arquivos .ini da pasta 'resources' para uma subpasta 'configs'
-    no diretório de saída do projeto.
+def copiar_configs_resources(pasta_projeto_saida: Path, nome_yaml: str = "colmap_config_2.yaml", pasta_resources: Path = None) -> Path:
+    """Copia o arquivo de configuração YAML usado nesta execução para a pasta 'configs'
+    no diretório do projeto, garantindo a rastreabilidade dos parâmetros.
     """
     if pasta_resources is None:
-        # Encontra a raiz do projeto (subindo de src/reconstruction para a raiz)
-        pasta_resources = (
-            Path(__file__).resolve().parent.parent.parent / "resources"
-        )
+        pasta_resources = Path(__file__).resolve().parent.parent.parent / "resources"
 
-    if not pasta_resources.exists():
-        logging.warning(
-            f"Pasta de resources não encontrada em: {pasta_resources}"
-        )
-        return
+    # Usa o nome do YAML passado por argumento
+    arquivo_yaml_origem = pasta_resources / nome_yaml
 
-    # Organiza os .ini dentro de uma pasta dedicada 'configs'
+    if not arquivo_yaml_origem.exists():
+        logging.warning(f"Arquivo de configuração não encontrado em: {arquivo_yaml_origem}")
+        return None
+
     pasta_destino_configs = pasta_projeto_saida / "configs"
     pasta_destino_configs.mkdir(parents=True, exist_ok=True)
 
-    for arquivo_ini in pasta_resources.glob("*.ini"):
-        destino = pasta_destino_configs / arquivo_ini.name
-        shutil.copy2(arquivo_ini, destino)
-        logging.info(
-            f"Configuração copiada: {arquivo_ini.name} -> configs/{destino.name}"
-        )
+    # Mantém o mesmo nome do arquivo de origem no destino
+    destino = pasta_destino_configs / arquivo_yaml_origem.name
+    shutil.copy2(arquivo_yaml_origem, destino)
+    logging.info(f"Configuração registrada para o projeto: {destino.name}")
+    
+    return destino
 
 
 def limpar_arquivos_intermediarios(pasta_projeto_saida: Path):
