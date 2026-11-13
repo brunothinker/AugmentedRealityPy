@@ -1,5 +1,6 @@
 import sys
-from typing import Callable, Optional
+from collections.abc import Callable
+
 import flet as ft
 
 from ui.theme import (
@@ -15,24 +16,24 @@ from ui.theme import (
 class TextRedirector:
     """Redireciona prints do sys.stdout/stderr para o componente de texto do Flet em tempo real."""
 
-    def __init__(self, append_func: Callable[[str], None]):
+    def __init__(self, append_func: Callable[[str], None]) -> None:
         self.append_func = append_func
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
 
-    def write(self, message: str):
+    def write(self, message: str) -> None:
         if message:
             self.append_func(message)
             self.original_stdout.write(message)
 
-    def flush(self):
+    def flush(self) -> None:
         self.original_stdout.flush()
 
-    def start(self):
+    def start(self) -> None:
         sys.stdout = self
         sys.stderr = self
 
-    def stop(self):
+    def stop(self) -> None:
         sys.stdout = self.original_stdout
         sys.stderr = self.original_stderr
 
@@ -41,17 +42,17 @@ class ExecutionDialog:
     """Caixa de Diálogo Flutuante para Acompanhamento de Processos, Logs e Conclusão."""
 
     def __init__(
-            self,
-            page: ft.Page,
-            title: str = "Processando...",
-            on_cancel: Optional[Callable[[], None]] = None,
-    ):
+        self,
+        page: ft.Page,
+        title: str = "Processando...",
+        on_cancel: Callable[[], None] | None = None,
+    ) -> None:
         self.page = page
         self.on_cancel = on_cancel
         self.is_finished = False
 
         self.icon_header = ft.Icon(ft.icons.SETTINGS_SUGGEST, color=COLOR_PRIMARY)
-        self.lbl_title = ft.Text(title, size=18, weight="bold", color=COLOR_TEXT)
+        self.lbl_title = ft.Text(title, size=18, weight=ft.FontWeight.BOLD, color=COLOR_TEXT)
         self.status_text = ft.Text("Iniciando processo...", italic=True, size=13, color=COLOR_SUBTEXT)
         self.progress_bar = ft.ProgressBar(value=0.0, color=COLOR_PRIMARY, height=8)
 
@@ -106,22 +107,22 @@ class ExecutionDialog:
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-    def _append_log(self, text: str):
-        self.log_text.value += text
+    def _append_log(self, text: str) -> None:
+        self.log_text.value = (self.log_text.value or "") + text
         self.page.update()
 
-    def _toggle_logs(self, e):
+    def _toggle_logs(self, _: ft.ControlEvent) -> None:
         self.log_container.visible = not self.log_container.visible
         self.btn_toggle_log.text = "Exibir Logs" if not self.log_container.visible else "Ocultar Logs"
         self.page.update()
 
-    def _handle_action(self, e):
+    def _handle_action(self, _: ft.ControlEvent) -> None:
         if self.is_finished:
             self.close()
         else:
             self._confirm_cancel()
 
-    def _confirm_cancel(self):
+    def _confirm_cancel(self) -> None:
         """Abre caixa de diálogo secundária pedindo confirmação de cancelamento."""
         confirm_dialog = ft.AlertDialog(
             title=ft.Text("Confirmar Cancelamento"),
@@ -141,35 +142,35 @@ class ExecutionDialog:
         confirm_dialog.open = True
         self.page.update()
 
-    def _close_confirm(self, confirm_dialog: ft.AlertDialog):
+    def _close_confirm(self, confirm_dialog: ft.AlertDialog) -> None:
         confirm_dialog.open = False
         self.page.dialog = self.dialog
         self.page.update()
 
-    def _execute_cancel(self, confirm_dialog: ft.AlertDialog):
+    def _execute_cancel(self, confirm_dialog: ft.AlertDialog) -> None:
         confirm_dialog.open = False
         if self.on_cancel:
             self.on_cancel()
         self.close()
 
-    def show(self):
+    def show(self) -> None:
         self.redirector.start()
         self.page.dialog = self.dialog
         self.dialog.open = True
         self.page.update()
 
-    def close(self):
+    def close(self) -> None:
         self.redirector.stop()
         self.dialog.open = False
         self.page.update()
 
-    def update_progress(self, val: float, msg: str = ""):
+    def update_progress(self, val: float, msg: str = "") -> None:
         self.progress_bar.value = val
         if msg:
             self.status_text.value = msg
         self.page.update()
 
-    def set_finished(self, success: bool = True, message: str = "Processamento Concluído!"):
+    def set_finished(self, success: bool = True, message: str = "Processamento Concluído!") -> None:
         """Sinaliza o fim da tarefa, altera o título e disponibiliza o botão para fechar."""
         self.is_finished = True
         self.progress_bar.value = 1.0

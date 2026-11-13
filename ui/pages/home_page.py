@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Dict
+
 import flet as ft
 
 from ui.theme import (
@@ -13,7 +14,7 @@ from ui.theme import (
 
 def create_home_page(
     page: ft.Page,
-    selected_paths: Dict[str, Path],
+    selected_paths: dict[str, Path],
     on_navigate: Callable[[str], None],
 ) -> ft.Container:
     """Gera a View da Página Inicial contendo o menu dos módulos em lista estendida.
@@ -30,6 +31,7 @@ def create_home_page(
     Returns:
         ft.Container: Container Flet estruturado contendo o menu principal de navegação.
     """
+    _ = (page, selected_paths)
 
     def build_module_card(
         title: str,
@@ -45,7 +47,7 @@ def create_home_page(
                     ft.Row(
                         [
                             ft.Icon(icon, size=26, color=COLOR_PRIMARY),
-                            ft.Text(title, size=15, weight="bold", color=COLOR_TEXT),
+                            ft.Text(title, size=15, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                         ],
                         spacing=12,
                         alignment=ft.MainAxisAlignment.START,

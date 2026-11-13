@@ -1,6 +1,6 @@
-from pathlib import Path
 import threading
-from typing import Dict
+from pathlib import Path
+
 import flet as ft
 
 from ui.components.execution_dialog import ExecutionDialog
@@ -18,7 +18,7 @@ from ui.theme import (
 )
 
 
-def create_mono_reconstruction_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_mono_reconstruction_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de reconstrução monocular 3D (Structure from Motion).
 
     Instancia os campos de texto para nome do projeto e os seletores `IOPickerCard`
@@ -58,7 +58,7 @@ def create_mono_reconstruction_page(page: ft.Page, selected_paths: Dict[str, Pat
     )
 
     # 3. Handler de acionamento do processamento monocular em thread separada
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         # Configuração do modal de execução com callback de cancelamento
@@ -69,14 +69,14 @@ def create_mono_reconstruction_page(page: ft.Page, selected_paths: Dict[str, Pat
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_mono_reconstruction(
                 selected_paths=selected_paths,
-                project_name=tf_project_name.value,
+                project_name=tf_project_name.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -119,7 +119,7 @@ def create_mono_reconstruction_page(page: ft.Page, selected_paths: Dict[str, Pat
         content=ft.Column(
             [
                 ft.Icon(ft.icons.IMAGE_SEARCH, size=45, color=COLOR_ICON),
-                ft.Text("Reconstrução Monocular (3D)", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Reconstrução Monocular (3D)", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_mono_rec,
             ],
@@ -129,7 +129,7 @@ def create_mono_reconstruction_page(page: ft.Page, selected_paths: Dict[str, Pat
     )
 
 
-def create_stereo_reconstruction_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_stereo_reconstruction_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de reconstrução estéreo 3D.
 
     Configura os campos para o nome do projeto e baseline física entre as câmeras,
@@ -183,7 +183,7 @@ def create_stereo_reconstruction_page(page: ft.Page, selected_paths: Dict[str, P
     )
 
     # 3. Handler de acionamento do processamento estéreo em thread dedicada
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         dialog = ExecutionDialog(
@@ -193,15 +193,15 @@ def create_stereo_reconstruction_page(page: ft.Page, selected_paths: Dict[str, P
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_stereo_reconstruction(
                 selected_paths=selected_paths,
-                project_name=tf_project_name.value,
-                baseline_str=tf_baseline.value,
+                project_name=tf_project_name.value or "",
+                baseline_str=tf_baseline.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -246,7 +246,7 @@ def create_stereo_reconstruction_page(page: ft.Page, selected_paths: Dict[str, P
         content=ft.Column(
             [
                 ft.Icon(ft.icons.LAYERS, size=45, color=COLOR_ICON),
-                ft.Text("Reconstrução Estéreo (3D)", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Reconstrução Estéreo (3D)", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_stereo_rec,
             ],

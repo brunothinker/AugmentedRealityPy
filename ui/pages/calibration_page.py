@@ -1,11 +1,14 @@
-from pathlib import Path
 import threading
-from typing import Dict
+from pathlib import Path
+
 import flet as ft
 
 from ui.components.execution_dialog import ExecutionDialog
 from ui.components.io_picker_card import IOPickerCard
-from ui.controllers.calibration_controller import handle_mono_calibration, handle_stereo_calibration
+from ui.controllers.calibration_controller import (
+    handle_mono_calibration,
+    handle_stereo_calibration,
+)
 from ui.theme import (
     BUTTON_HEIGHT,
     COLOR_ICON,
@@ -15,7 +18,7 @@ from ui.theme import (
 )
 
 
-def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_mono_calibration_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de calibração de câmera monocular.
 
     Configura os campos de entrada de texto (nome do projeto e dimensões do tabuleiro de xadrez),
@@ -58,7 +61,7 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
     )
 
     # 3. Handler de execução para a rotina monocular
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         dialog = ExecutionDialog(
@@ -68,17 +71,17 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_mono_calibration(
                 selected_paths=selected_paths,
-                project_name_str=tf_project_name.value,
-                rows_str=tf_grid_rows.value,
-                cols_str=tf_grid_cols.value,
-                square_size_str=tf_square_size.value,
+                project_name_str=tf_project_name.value or "",
+                rows_str=tf_grid_rows.value or "",
+                cols_str=tf_grid_cols.value or "",
+                square_size_str=tf_square_size.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -122,7 +125,7 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
         content=ft.Column(
             [
                 ft.Icon(ft.icons.CAMERA_ALT, size=45, color=COLOR_ICON),
-                ft.Text("Calibração Monocular", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Calibração Monocular", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_mono,
             ],
@@ -132,7 +135,7 @@ def create_mono_calibration_page(page: ft.Page, selected_paths: Dict[str, Path])
     )
 
 
-def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_stereo_calibration_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de calibração de sistema estéreo.
 
     Configura a seleção independente das câmeras esquerda e direita, campos para geometria
@@ -182,7 +185,7 @@ def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path
     )
 
     # 3. Handler de execução para a rotina estéreo
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         dialog = ExecutionDialog(
@@ -192,17 +195,17 @@ def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_stereo_calibration(
                 selected_paths=selected_paths,
-                project_name_str=tf_project_name.value,
-                rows_str=tf_grid_rows.value,
-                cols_str=tf_grid_cols.value,
-                square_size_str=tf_square_size.value,
+                project_name_str=tf_project_name.value or "",
+                rows_str=tf_grid_rows.value or "",
+                cols_str=tf_grid_cols.value or "",
+                square_size_str=tf_square_size.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -247,7 +250,7 @@ def create_stereo_calibration_page(page: ft.Page, selected_paths: Dict[str, Path
         content=ft.Column(
             [
                 ft.Icon(ft.icons.CAMERA, size=45, color=COLOR_ICON),
-                ft.Text("Calibração Estéreo", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Calibração Estéreo", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_stereo,
             ],

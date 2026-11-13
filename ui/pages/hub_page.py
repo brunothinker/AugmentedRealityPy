@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any
+
 import flet as ft
 
 from ui.theme import (
@@ -14,12 +16,12 @@ from ui.theme import (
 
 def create_generic_hub_page(
     page: ft.Page,
-    selected_paths: Dict[str, Path],
+    selected_paths: dict[str, Path],
     on_navigate: Callable[[str], None],
     main_icon: str,
     title: str,
     subtitle: str,
-    options: List[Dict[str, Any]],
+    options: list[dict[str, Any]],
 ) -> ft.Container:
     """Gera uma página de Hub genérica e polimórfica para menus de navegação intermediários.
 
@@ -39,9 +41,10 @@ def create_generic_hub_page(
     Returns:
         ft.Container: Container Flet estruturado contendo a interface polimórfica do Hub.
     """
+    _ = (page, selected_paths)
 
     def build_option_card(
-        title: str,
+        card_title: str,
         description: str,
         icon: str,
         route_key: str,
@@ -52,9 +55,9 @@ def create_generic_hub_page(
                 [
                     ft.Icon(icon, size=40, color=COLOR_PRIMARY),
                     ft.Text(
-                        title,
+                        card_title,
                         size=18,
-                        weight="bold",
+                        weight=ft.FontWeight.BOLD,
                         color=COLOR_TEXT,
                     ),
                     ft.Text(
@@ -93,7 +96,7 @@ def create_generic_hub_page(
                 ft.Text(
                     title,
                     size=26,
-                    weight="bold",
+                    weight=ft.FontWeight.BOLD,
                     color=COLOR_TEXT,
                 ),
                 ft.Text(subtitle, color=COLOR_SUBTEXT),
@@ -101,7 +104,7 @@ def create_generic_hub_page(
                 ft.Row(
                     [
                         build_option_card(
-                            title=opt["title"],
+                            card_title=opt["title"],
                             description=opt["description"],
                             icon=opt["icon"],
                             route_key=opt["route_key"],

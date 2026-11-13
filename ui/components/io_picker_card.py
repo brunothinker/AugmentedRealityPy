@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+
 import flet as ft
 
 from ui.theme import (
@@ -20,11 +20,11 @@ class IOPickerCard:
         title: str,
         icon: str,
         path_key: str,
-        selected_paths: Dict[str, Path],
+        selected_paths: dict[str, Path],
         is_directory: bool = True,
         width: int = 185,
         height: int = 125,
-    ):
+    ) -> None:
         self.page = page
         self.title = title
         self.icon = icon
@@ -46,20 +46,20 @@ class IOPickerCard:
         if self.picker not in self.page.overlay:
             self.page.overlay.append(self.picker)
 
-    def _on_result(self, e: ft.FilePickerResultEvent):
+    def _on_result(self, e: ft.FilePickerResultEvent) -> None:
         if self.is_directory and e.path:
             p = Path(e.path)
             self.selected_paths[self.path_key] = p
             self.lbl_path.value = p.name
             self.lbl_path.color = COLOR_TEXT
-        elif not self.is_directory and e.files and len(e.files) > 0:
+        elif not self.is_directory and e.files and e.files[0].path:
             p = Path(e.files[0].path)
             self.selected_paths[self.path_key] = p
             self.lbl_path.value = p.name
             self.lbl_path.color = COLOR_TEXT
         self.page.update()
 
-    def _open_picker(self, e):
+    def _open_picker(self, _: ft.ControlEvent) -> None:
         if self.is_directory:
             self.picker.get_directory_path(dialog_title=f"Selecionar {self.title}")
         else:
@@ -78,14 +78,15 @@ class IOPickerCard:
             on_click=self._open_picker,
             on_hover=lambda e: setattr(
                 e.control, "bgcolor", COLOR_CARD_HOVER if e.data == "true" else COLOR_CARD_BG
-            ) or self.page.update(),
+            )
+            or self.page.update(),
             content=ft.Column(
                 [
                     ft.Icon(self.icon, size=28, color=COLOR_PRIMARY),
                     ft.Text(
                         self.title,
                         size=12,
-                        weight="bold",
+                        weight=ft.FontWeight.BOLD,
                         color=COLOR_TEXT,
                         text_align=ft.TextAlign.CENTER,
                     ),
@@ -108,13 +109,14 @@ class IOPickerCard:
             on_click=self._open_picker,
             on_hover=lambda e: setattr(
                 e.control, "bgcolor", COLOR_CARD_HOVER if e.data == "true" else COLOR_CARD_BG
-            ) or self.page.update(),
+            )
+            or self.page.update(),
             content=ft.Row(
                 [
                     ft.Icon(self.icon, size=24, color=COLOR_PRIMARY),
                     ft.Column(
                         [
-                            ft.Text(self.title, size=13, weight="bold", color=COLOR_TEXT),
+                            ft.Text(self.title, size=13, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                             self.lbl_path,
                         ],
                         spacing=1,

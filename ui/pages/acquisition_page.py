@@ -1,6 +1,6 @@
-from pathlib import Path
 import threading
-from typing import Dict
+from pathlib import Path
+
 import flet as ft
 
 from ui.components.execution_dialog import ExecutionDialog
@@ -15,7 +15,7 @@ from ui.theme import (
 )
 
 
-def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_extract_frames_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de decomposição temporal e extração de fotogramas.
 
     Instancia os campos de texto para nome do projeto e FPS, os componentes `IOPickerCard`
@@ -61,7 +61,7 @@ def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -
     )
 
     # 3. Handler de acionamento do processamento em thread separada
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         # Configuração do modal de execução com callback de cancelamento
@@ -72,15 +72,15 @@ def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_extract_frames(
                 selected_paths=selected_paths,
-                project_name=tf_acq_proj.value,
-                fps_str=tf_acq_fps.value,
+                project_name=tf_acq_proj.value or "",
+                fps_str=tf_acq_fps.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -123,7 +123,7 @@ def create_extract_frames_page(page: ft.Page, selected_paths: Dict[str, Path]) -
         content=ft.Column(
             [
                 ft.Icon(ft.icons.MOVIE_CREATION, size=45, color=COLOR_ICON),
-                ft.Text("Decomposição Temporal de Vídeo", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Decomposição Temporal de Vídeo", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_acquisition,
             ],

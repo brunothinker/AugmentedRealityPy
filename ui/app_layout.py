@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List
+
 import flet as ft
 
 from ui.router import ROUTE_REGISTRY, build_page_view
@@ -10,7 +10,7 @@ from ui.theme import (
 )
 
 
-def create_app_layout(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_app_layout(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Cria a moldura (shell) principal do aplicativo com controle de navegação.
 
     Gerencia o histórico de navegação (`navigation_stack`), atualiza dinamicamente o
@@ -24,7 +24,7 @@ def create_app_layout(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
         ft.Container: Moldura de layout contendo a barra superior fixa e a área de conteúdo.
     """
     # 1. Pilha para gerenciamento do histórico de navegação
-    navigation_stack: List[str] = ["home"]
+    navigation_stack: list[str] = ["home"]
 
     # 2. Componentes visuais do Cabeçalho Fixo
     btn_back = ft.IconButton(
@@ -38,7 +38,7 @@ def create_app_layout(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
     lbl_page_title = ft.Text(
         value="",
         size=20,
-        weight="bold",
+        weight=ft.FontWeight.BOLD,
         color=COLOR_TEXT,
         text_align=ft.TextAlign.CENTER,
     )
@@ -49,9 +49,9 @@ def create_app_layout(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
     def update_header_and_content() -> None:
         """Atualiza a barra superior e substitui a view exibida na área de conteúdo."""
         current_route = navigation_stack[-1]
-        route_info = ROUTE_REGISTRY.get(current_route, {})
+        route_info = ROUTE_REGISTRY.get(current_route)
 
-        lbl_page_title.value = route_info.get("title", "Visão Computacional 3D")
+        lbl_page_title.value = str(route_info["title"]) if route_info else "Visão Computacional 3D"
         btn_back.visible = len(navigation_stack) > 1
 
         content_area.content = build_page_view(

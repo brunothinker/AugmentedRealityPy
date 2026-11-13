@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict
+
 import flet as ft
 
 from ui.components.io_picker_card import IOPickerCard
@@ -13,7 +13,7 @@ from ui.theme import (
 )
 
 
-def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_visualization_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de inspeção e visualização volumétrica 3D.
 
     Instancia o seletor de arquivos de malha/nuvem de pontos (`.ply` ou `.obj`) utilizando
@@ -27,12 +27,11 @@ def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) ->
     Returns:
         ft.Container: Container Flet estruturado contendo a view de visualização 3D.
     """
-
     # 1. Função utilitária interna para exibição de SnackBars/Toasts de feedback
-    def show_toast(message: str, is_error: bool = False):
+    def show_toast(message: str, is_error: bool = False) -> None:
         page.show_snack_bar(
             ft.SnackBar(
-                ft.Text(message, weight="bold"),
+                ft.Text(message, weight=ft.FontWeight.BOLD),
                 bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700,
             )
         )
@@ -54,7 +53,7 @@ def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) ->
         bgcolor=COLOR_PRIMARY,
         color=COLOR_TEXT,
         height=BUTTON_HEIGHT,
-        on_click=lambda e: handle_visualization(selected_paths, show_toast),
+        on_click=lambda _: handle_visualization(selected_paths, show_toast),
     )
 
     # 4. Estruturação visual do formulário de visualização
@@ -75,7 +74,7 @@ def create_visualization_page(page: ft.Page, selected_paths: Dict[str, Path]) ->
         content=ft.Column(
             [
                 ft.Icon(ft.icons.VIEW_IN_AR, size=45, color=COLOR_ICON),
-                ft.Text("Inspeção Volumétrica 3D", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Inspeção Volumétrica 3D", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_visualization,
             ],

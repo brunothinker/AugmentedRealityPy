@@ -1,6 +1,6 @@
-from pathlib import Path
 import threading
-from typing import Dict
+from pathlib import Path
+
 import flet as ft
 
 from ui.components.execution_dialog import ExecutionDialog
@@ -15,7 +15,7 @@ from ui.theme import (
 )
 
 
-def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_clahe_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de realce de contraste adaptativo (CLAHE).
 
     Instancia os seletores de pasta de entrada e destino utilizando o `IOPickerCard` no
@@ -51,7 +51,7 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
     )
 
     # 3. Handler de execução para aplicação do filtro
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         dialog = ExecutionDialog(
@@ -61,15 +61,15 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_clahe(
                 selected_paths=selected_paths,
-                clip_limit_str=tf_norm_clip.value,
-                tile_size_str=tf_norm_tile.value,
+                clip_limit_str=tf_norm_clip.value or "",
+                tile_size_str=tf_norm_tile.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -110,7 +110,7 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
         content=ft.Column(
             [
                 ft.Icon(ft.icons.IMAGE_SEARCH, size=45, color=COLOR_ICON),
-                ft.Text("Realce Contraste (CLAHE)", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Realce Contraste (CLAHE)", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_clahe,
             ],
@@ -120,7 +120,7 @@ def create_clahe_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Cont
     )
 
 
-def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_resize_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de redimensionamento de imagens em lote.
 
     Configura os seletores de entrada e saída, os campos para inserção da resolução alvo
@@ -155,7 +155,7 @@ def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Con
     )
 
     # 3. Handler de execução do redimensionamento
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         cancel_event = threading.Event()
 
         dialog = ExecutionDialog(
@@ -165,15 +165,15 @@ def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Con
         )
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Processamento finalizado com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_resize(
                 selected_paths=selected_paths,
-                width_str=tf_resize_w.value,
-                height_str=tf_resize_h.value,
+                width_str=tf_resize_w.value or "",
+                height_str=tf_resize_h.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -214,7 +214,7 @@ def create_resize_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Con
         content=ft.Column(
             [
                 ft.Icon(ft.icons.ASPECT_RATIO, size=45, color=COLOR_ICON),
-                ft.Text("Redimensionamento de Imagens", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Redimensionamento de Imagens", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_resize,
             ],

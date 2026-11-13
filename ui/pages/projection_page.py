@@ -1,6 +1,6 @@
-from pathlib import Path
 import threading
-from typing import Dict
+from pathlib import Path
+
 import flet as ft
 
 from ui.components.execution_dialog import ExecutionDialog
@@ -15,7 +15,7 @@ from ui.theme import (
 )
 
 
-def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft.Container:
+def create_projection_page(page: ft.Page, selected_paths: dict[str, Path]) -> ft.Container:
     """Gera a interface gráfica para a página de projeção e renderização de vistas sintéticas.
 
     Configura a entrada do nome da subpasta do projeto, instancia os componentes `IOPickerCard`
@@ -41,7 +41,7 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
     # 2. Instanciação dos cards de seleção I/O no formato lista
     card_colmap_dir = IOPickerCard(
         page=page,
-        title="Pasta COLMAP (sparse)",
+        title="Pasta dos Binarios (sparse/0)",
         icon=ft.icons.FOLDER_SPECIAL,
         path_key="colmap_dir",
         selected_paths=selected_paths,
@@ -50,7 +50,7 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
 
     card_mesh_file = IOPickerCard(
         page=page,
-        title="Mesh 3D (.ply / .obj)",
+        title="Mesh 3D (.ply)",
         icon=ft.icons.VIEW_IN_AR,
         path_key="mesh_file",
         selected_paths=selected_paths,
@@ -67,18 +67,18 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
     )
 
     # 3. Handler de acionamento do pipeline de projeção
-    def on_run_click(e: ft.ControlEvent):
+    def on_run_click(_: ft.ControlEvent) -> None:
         dialog = ExecutionDialog(page=page, title="Projeção de Vistas Sintéticas")
         dialog.show()
 
-        def set_ui_state(is_running: bool, status_msg: str):
+        def set_ui_state(is_running: bool, _status_msg: str) -> None:
             if not is_running:
                 dialog.set_finished(success=True, message="Projeções renderizadas com sucesso!")
 
-        def run_task():
+        def run_task() -> None:
             handle_render_projection(
                 selected_paths=selected_paths,
-                output_folder_name=tf_proj_name.value,
+                output_folder_name=tf_proj_name.value or "",
                 show_toast_callback=lambda msg, is_error=False: page.show_snack_bar(
                     ft.SnackBar(ft.Text(msg), bgcolor=ft.colors.RED_700 if is_error else ft.colors.GREEN_700)
                 ),
@@ -118,7 +118,7 @@ def create_projection_page(page: ft.Page, selected_paths: Dict[str, Path]) -> ft
         content=ft.Column(
             [
                 ft.Icon(ft.icons.CAMERA_OUTDOOR, size=45, color=COLOR_ICON),
-                ft.Text("Projeção de Vistas Sintéticas", size=24, weight="bold", color=COLOR_TEXT),
+                ft.Text("Projeção de Vistas Sintéticas", size=24, weight=ft.FontWeight.BOLD, color=COLOR_TEXT),
                 ft.Container(height=10),
                 form_projection,
             ],

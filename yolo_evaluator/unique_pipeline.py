@@ -3,18 +3,18 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from ultralytics import YOLO
+from ultralytics.models.yolo import YOLO
 
 
 # -----------------------------------------------------------------------------
 # 1. Utilidades para Anotação e Dataset
 # -----------------------------------------------------------------------------
 def create_yolo_label(
-        output_txt_path: Path,
-        img_width: int,
-        img_height: int,
-        bbox_pixels: tuple[float, float, float, float],
-        class_id: int = 0,
+    output_txt_path: Path,
+    img_width: int,
+    img_height: int,
+    bbox_pixels: tuple[float, float, float, float],
+    class_id: int = 0,
 ) -> Path:
     """Converte coordenadas em pixels (x_min, y_min, x_max, y_max) para o formato
     normalizado do YOLO (0.0 a 1.0) e escreve o arquivo .txt correspondente.
@@ -67,7 +67,7 @@ def setup_dataset_yaml(base_dir: Path) -> Path:
 class YOLOBoxEvaluator:
     """Carrega os pesos do YOLO treinado e avalia a qualidade da projeção 2D."""
 
-    def __init__(self, weights_path: Path):
+    def __init__(self, weights_path: Path) -> None:
         self.weights_path = Path(weights_path).resolve()
         if not self.weights_path.exists():
             raise FileNotFoundError(
@@ -76,14 +76,14 @@ class YOLOBoxEvaluator:
         self.model = YOLO(str(self.weights_path))
 
     def evaluate_projection(
-            self, image_path: Path, conf_threshold: float = 0.10
+        self, image_path: Path, conf_threshold: float = 0.10
     ) -> dict[str, Any]:
         """Avalia uma imagem de projeção 2D e retorna a métrica de confiança da detecção."""
         img_path = Path(image_path).resolve()
         if not img_path.exists():
             raise FileNotFoundError(f"Imagem não encontrada: {img_path}")
 
-        results = self.model.predict(
+        results: Any = self.model.predict(
             source=str(img_path), conf=conf_threshold, verbose=False
         )
 
@@ -91,6 +91,8 @@ class YOLOBoxEvaluator:
         max_confidence = 0.0
 
         for r in results:
+            if r.boxes is None:
+                continue
             for box in r.boxes:
                 conf = float(box.conf[0])
                 cls_id = int(box.cls[0])
@@ -111,7 +113,7 @@ class YOLOBoxEvaluator:
         }
 
     def evaluate_directory(
-            self, dir_path: Path, conf_threshold: float = 0.10
+        self, dir_path: Path, conf_threshold: float = 0.10
     ) -> list[dict[str, Any]]:
         """Avalia todas as imagens (.jpg, .jpeg, .png) dentro de um diretório e suas subpastas."""
         dir_path = Path(dir_path).resolve()
@@ -125,7 +127,7 @@ class YOLOBoxEvaluator:
         for ext in extensions:
             image_files.extend(dir_path.rglob(ext))
 
-        image_files = sorted(list(set(image_files)))
+        image_files = sorted(set(image_files))
 
         if not image_files:
             print(f"[!] Nenhuma imagem encontrada em: {dir_path}")
@@ -148,11 +150,11 @@ class YOLOBoxEvaluator:
 # 3. Execução de Treinamento
 # -----------------------------------------------------------------------------
 def run_training(
-        base_dir: Path,
-        base_model: str = "yolov8n.pt",
-        epochs: int = 50,
-        imgsz: int = 640,
-        batch: int = 16,
+    base_dir: Path,
+    base_model: str = "yolov8n.pt",
+    epochs: int = 50,
+    imgsz: int = 640,
+    batch: int = 16,
 ) -> Path:
     """Executa o treinamento do YOLO e grava os artefatos em yolo_evaluator/."""
     yaml_path = setup_dataset_yaml(base_dir)
@@ -216,18 +218,18 @@ if __name__ == "__main__":
         print(f"=== Iniciando Treinamento em: {working_dir} ===")
         weights_file = run_training(base_dir=working_dir, epochs=args.epochs)
 
-    evaluator = None
+    evaluator: YOLOBoxEvaluator | None = None
     if args.predict or args.predict_dir:
         evaluator = YOLOBoxEvaluator(weights_path=weights_file)
 
-    if args.predict:
+    if args.predict and evaluator is not None:
         print("\n=== Executando Avaliação de Imagem Única ===")
         resultado = evaluator.evaluate_projection(Path(args.predict))
         print(f"Imagem: {resultado['image_name']}")
         print(f"Caixa Detectada: {resultado['object_detected']}")
         print(f"Score de Semelhança: {resultado['quality_score'] * 100:.2f}%\n")
 
-    if args.predict_dir:
+    if args.predict_dir and evaluator is not None:
         print(f"\n=== Avaliando Projeções em: {args.predict_dir} ===")
         resultados = evaluator.evaluate_directory(Path(args.predict_dir))
 
@@ -237,9 +239,9 @@ if __name__ == "__main__":
 
             scores = []
             for r in resultados:
-                score_pct = r['quality_score'] * 100
+                score_pct = r["quality_score"] * 100
                 scores.append(score_pct)
-                status = "SIM" if r['object_detected'] else "NÃO"
+                status = "SIM" if r["object_detected"] else "NÃO"
                 print(f"{r['relative_path']:<55} | {status:<18} | {score_pct:>13.2f}%")
 
             avg_score = sum(scores) / len(scores)
