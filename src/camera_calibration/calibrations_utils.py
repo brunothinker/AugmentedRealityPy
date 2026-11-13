@@ -1,17 +1,18 @@
+from collections.abc import Callable
+from pathlib import Path
+
 import cv2
 import numpy as np
-from pathlib import Path
+from cv2.typing import MatLike
 from tqdm import tqdm
-from typing import Callable, Optional, Tuple
-
 
 
 def run_extract_chessboard(
-        images_dir: Path,
-        board_dimensions: Tuple[int, int],
-        square_size_mm: float,
-        progress_callback: Optional[Callable[[float], None]] = None
-):
+    images_dir: Path,
+    board_dimensions: tuple[int, int],
+    square_size_mm: float,
+    progress_callback: Callable[[float], None] | None = None,
+) -> tuple[list[np.ndarray], list[MatLike], MatLike] | tuple[None, None, None]:
     """
     Localiza as quinas internas do tabuleiro de calibração nas imagens
     e mapeia essas posições 2D para coordenadas 3D teóricas do mundo real.
@@ -26,18 +27,18 @@ def run_extract_chessboard(
     # Multiplica pelos milímetros reais para dar escala física ao modelo matemático
     obj_points_3d *= square_size_mm
 
-    list_3d_points = []
-    list_2d_points = []
-    reference_gray_image = None
+    list_3d_points: list[np.ndarray] = []
+    list_2d_points: list[MatLike] = []
+    reference_gray_image: MatLike | None = None
 
     # 2. Busca e ordenação de todas as imagens de calibração no diretório
     extensions = ["*.jpg", "*.jpeg", "*.png", "*.bmp", "*.tiff"]
-    image_paths = []
+    image_paths: list[Path] = []
     for ext in extensions:
         image_paths.extend(images_dir.glob(ext))
         image_paths.extend(images_dir.glob(ext.upper()))
 
-    image_paths = sorted(list(set(image_paths)))
+    image_paths = sorted(set(image_paths))
 
     if not image_paths:
         return None, None, None
@@ -66,5 +67,8 @@ def run_extract_chessboard(
         # Notifica a interface gráfica (Flet) sobre o avanço, se o callback existir
         if progress_callback:
             progress_callback((idx + 1) / total_images)
+
+    if reference_gray_image is None:
+        return None, None, None
 
     return list_3d_points, list_2d_points, reference_gray_image

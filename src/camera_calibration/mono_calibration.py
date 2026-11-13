@@ -1,13 +1,18 @@
-from src.camera_calibration.calibrations_utils import *
+from collections.abc import Callable
+from pathlib import Path
+
+import cv2
+
+from src.camera_calibration.calibrations_utils import run_extract_chessboard
 
 
 def run_mono_calibration(
-        input_dir: Path,
-        output_dir: Path,
-        board_dimensions: Tuple[int, int],
-        square_size_mm: float,
-        project_name: str,
-        progress_callback: Optional[Callable[[float], None]] = None
+    input_dir: Path,
+    output_dir: Path,
+    board_dimensions: tuple[int, int],
+    square_size_mm: float,
+    project_name: str,
+    progress_callback: Callable[[float], None] | None = None,
 ) -> bool:
     """
     Calcula os parâmetros intrínsecos (distâncias focais e ponto principal)
@@ -16,7 +21,7 @@ def run_mono_calibration(
     # Coleta as correspondências entre o mundo 3D (teórico) e o plano 2D (foto real)
     pts_3d, pts_2d, ref_img = run_extract_chessboard(input_dir, board_dimensions, square_size_mm, progress_callback)
 
-    if not pts_3d:
+    if not pts_3d or not pts_2d or ref_img is None:
         print(f"\n[ERROR] Failed to detect corners in: {input_dir}")
         return False
 

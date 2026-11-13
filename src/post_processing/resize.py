@@ -1,15 +1,15 @@
-import cv2
+from collections.abc import Callable
 from pathlib import Path
-from tqdm import tqdm
-from typing import Callable, Optional, Tuple
 
+import cv2
+from tqdm import tqdm
 
 
 def run_resize_images(
-        input_dir: Path,
-        output_dir: Path,
-        target_size: Tuple[int, int] = (3000, 4000),  # (Height, Width)
-        progress_callback: Optional[Callable[[float], None]] = None
+    input_dir: Path,
+    output_dir: Path,
+    target_size: tuple[int, int] = (3000, 4000),  # (Height, Width)
+    progress_callback: Callable[[float], None] | None = None,
 ) -> bool:
     """
     Padroniza a resolução de todas as imagens de forma recursiva.
@@ -19,13 +19,13 @@ def run_resize_images(
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
 
-    valid_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
+    valid_extensions = (".jpg", ".jpeg", ".png", ".bmp", ".tiff")
     target_h, target_w = target_size
     target_aspect = target_w / target_h
 
     print(f"[POST-PROCESSING] Resizing images to {target_w}x{target_h} recursively...")
 
-    files = [p for p in input_dir.rglob('*') if p.suffix.lower() in valid_extensions]
+    files = [p for p in input_dir.rglob("*") if p.suffix.lower() in valid_extensions]
 
     if not files:
         print("[WARNING] No images found to resize.")
@@ -54,7 +54,7 @@ def run_resize_images(
         # 2. Crop central exato
         start_x = (new_w - target_w) // 2
         start_y = (new_h - target_h) // 2
-        final_img = resized_img[start_y:start_y + target_h, start_x:start_x + target_w]
+        final_img = resized_img[start_y : start_y + target_h, start_x : start_x + target_w]
 
         # Reconstrução da árvore de diretórios na pasta de saída
         relative_path = img_path.relative_to(input_dir)

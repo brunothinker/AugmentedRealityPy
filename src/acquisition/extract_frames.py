@@ -1,15 +1,17 @@
+from collections.abc import Callable
 from pathlib import Path
-from tqdm import tqdm
-from typing import Callable, Optional
-from src.acquisition.acquisition_utils import *
 
+import cv2
+from tqdm import tqdm
+
+from src.acquisition.acquisition_utils import get_video_fps
 
 
 def run_extract_frames(
     video_path: Path,
     output_dir: Path,
     desired_fps: int,
-    progress_callback: Optional[Callable[[float], None]] = None
+    progress_callback: Callable[[float], None] | None = None,
 ) -> bool:
     """
     Extrai quadros sequenciais de um vídeo com base em uma taxa alvo (Target FPS).

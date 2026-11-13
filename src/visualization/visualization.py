@@ -1,5 +1,6 @@
-import pyvista as pv
 from pathlib import Path
+
+import pyvista as pv
 
 
 def run_show_mesh(model_path: Path) -> bool:
@@ -19,7 +20,7 @@ def run_show_mesh(model_path: Path) -> bool:
 
         # 2. Configuração do ambiente de renderização (Plotter)
         plotter = pv.Plotter(title=f"Volumetric Analysis - {model_path.name}")
-        plotter.set_background("black")
+        plotter.set_background("black")  # type: ignore[call-arg]
 
         # 3. Inserção da geometria na cena
         plotter.add_mesh(
@@ -31,13 +32,13 @@ def run_show_mesh(model_path: Path) -> bool:
         )
 
         # 4. Adição de guias espaciais
-        plotter.add_axes()
-        plotter.show_grid(color='gray', xtitle='X', ytitle='Y', ztitle='Z')
+        plotter.add_axes()  # type: ignore[call-arg]
+        plotter.show_grid(color='gray', xtitle='X', ytitle='Y', ztitle='Z')  # type: ignore[call-arg]
 
-        print(f"[SUCCESS] Rendering started.")
+        print("[SUCCESS] Rendering started.")
 
         # 5. EXIBIÇÃO ÚNICA E FINAL
-        plotter.show(full_screen=True)
+        plotter.show(full_screen=True)  # type: ignore[call-arg]
 
         return True
 

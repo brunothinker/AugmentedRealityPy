@@ -12,7 +12,11 @@ from src.projection.projecton_utils import (
 )
 
 
-def render_synthetic_views(colmap_dir, mesh_path, output_dir):
+def render_synthetic_views(
+    colmap_dir: str | Path,
+    mesh_path: str | Path,
+    output_dir: str | Path,
+) -> None:
     """
     Loads the 3D model and renders photos maintaining colors/textures
     from the poses in the COLMAP binary files.
@@ -20,7 +24,7 @@ def render_synthetic_views(colmap_dir, mesh_path, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     # 1. Resolve and load binary data automatically
-    resolved_bin_dir = resolve_colmap_bin_dir(colmap_dir)
+    resolved_bin_dir = resolve_colmap_bin_dir(str(colmap_dir))
     print(f"Reading COLMAP binaries from: {resolved_bin_dir}")
 
     cameras = read_cameras_binary(os.path.join(resolved_bin_dir, "cameras.bin"))
@@ -43,7 +47,7 @@ def render_synthetic_views(colmap_dir, mesh_path, output_dir):
         plotter.add_mesh(mesh, rgb=True, smooth_shading=True)
         print(" [i] Rendering with per-vertex colors extracted from the PLY.")
     elif hasattr(mesh, "textures") and len(mesh.textures) > 0:
-        plotter.add_mesh(mesh, texture=list(mesh.textures.values())[0], smooth_shading=True)
+        plotter.add_mesh(mesh, texture=next(iter(mesh.textures.values())), smooth_shading=True)
         print(" [i] Rendering with texture map.")
     else:
         plotter.add_mesh(mesh, color="white", smooth_shading=True)
@@ -51,7 +55,7 @@ def render_synthetic_views(colmap_dir, mesh_path, output_dir):
 
     print(f"Starting projection of {len(images)} views...")
 
-    for img_id, img_data in images.items():
+    for img_data in images.values():
         cam_data = cameras[img_data["camera_id"]]
 
         # --- EXTRINSICS ---

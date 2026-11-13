@@ -1,16 +1,16 @@
-import cv2
+from collections.abc import Callable
 from pathlib import Path
-from tqdm import tqdm
-from typing import Callable, Optional, Tuple
 
+import cv2
+from tqdm import tqdm
 
 
 def run_clahe_images(
-        input_dir: Path,
-        output_dir: Path,
-        clip_limit: float = 2.0,
-        tile_size: Tuple[int, int] = (8, 8),
-        progress_callback: Optional[Callable[[float], None]] = None
+    input_dir: Path,
+    output_dir: Path,
+    clip_limit: float = 2.0,
+    tile_size: tuple[int, int] = (8, 8),
+    progress_callback: Callable[[float], None] | None = None,
 ) -> bool:
     """
     Aplica a técnica CLAHE em todas as imagens (de forma recursiva, mantendo subpastas)
@@ -21,12 +21,12 @@ def run_clahe_images(
 
     # 1. Inicialização do algoritmo CLAHE
     clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_size)
-    valid_extensions = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
+    valid_extensions = (".jpg", ".jpeg", ".png", ".bmp", ".tiff")
 
-    print(f"[POST-PROCESSING] Applying CLAHE enhancement recursively...")
+    print("[POST-PROCESSING] Applying CLAHE enhancement recursively...")
 
     # Coleta recursiva de arquivos (entra em pastas como 'esquerda' e 'direita')
-    files = [p for p in input_dir.rglob('*') if p.suffix.lower() in valid_extensions]
+    files = [p for p in input_dir.rglob("*") if p.suffix.lower() in valid_extensions]
 
     if not files:
         print("[WARNING] No images found to enhance.")
@@ -63,5 +63,3 @@ def run_clahe_images(
 
     print(f"[SUCCESS] {total_files} images enhanced and saved in: {output_dir}")
     return True
-
-

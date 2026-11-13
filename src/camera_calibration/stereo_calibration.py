@@ -1,15 +1,21 @@
-from src.camera_calibration.calibrations_utils import *
+from collections.abc import Callable
+from pathlib import Path
+
+import cv2
+import numpy as np
+
+from src.camera_calibration.calibrations_utils import run_extract_chessboard
 
 
 def run_stereo_calibration(
-        input_dir_a: Path,
-        input_dir_b: Path,
-        output_dir: Path,
-        board_dimensions: Tuple[int, int],
-        square_size_mm: float,
-        project_name: str,
-        progress_callback_a: Optional[Callable[[float], None]] = None,
-        progress_callback_b: Optional[Callable[[float], None]] = None
+    input_dir_a: Path,
+    input_dir_b: Path,
+    output_dir: Path,
+    board_dimensions: tuple[int, int],
+    square_size_mm: float,
+    project_name: str,
+    progress_callback_a: Callable[[float], None] | None = None,
+    progress_callback_b: Callable[[float], None] | None = None,
 ) -> bool:
     """
     Calcula a relação espacial geométrica (Matriz de Rotação e Vetor de Translação)
@@ -25,7 +31,15 @@ def run_stereo_calibration(
     obj_B, img_B, res_B = run_extract_chessboard(input_dir_b, board_dimensions, square_size_mm, progress_callback_b)
 
     # Garante que ambas as câmeras capturaram os alvos perfeitamente pareados
-    if not img_A or not img_B or len(img_A) != len(img_B):
+    if (
+        not obj_A
+        or not obj_B
+        or not img_A
+        or not img_B
+        or res_A is None
+        or res_B is None
+        or len(img_A) != len(img_B)
+    ):
         print("\n[ERROR] Inconsistency in detected image pairs.")
         return False
 
@@ -47,7 +61,7 @@ def run_stereo_calibration(
         stereo_project_folder = output_dir / "stereo" / project_name
         stereo_project_folder.mkdir(parents=True, exist_ok=True)
 
-        def format_colmap(m, d):
+        def format_colmap(m: np.ndarray, d: np.ndarray) -> str:
             return f"{m[0, 0]:.12f},{m[1, 1]:.12f},{m[0, 2]:.12f},{m[1, 2]:.12f},{d.ravel()[0]:.12f},{d.ravel()[1]:.12f},{d.ravel()[2]:.12f},{d.ravel()[3]:.12f}"
 
         # Salva os arquivos de configuração individuais para posterior uso no pipeline do COLMAP
