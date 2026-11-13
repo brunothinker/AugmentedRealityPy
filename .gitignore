@@ -50,6 +50,10 @@ Thumbs.db
 
 #Yolo
 yolo_evaluator/dataset/*
+yolo_evaluator/errors/*
+yolo_evaluator/sam_gt/*
 yolo_evaluator/runs/caixa_model/*
-yolov8n.pt
 weights/*
+yolov8n.pt
+sam2.1_b.pt
+results_metrics.csv
